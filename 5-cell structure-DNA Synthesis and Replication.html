@@ -1,0 +1,587 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+#app{padding:1.25rem;background:#0f1117;min-height:100vh;border-radius:12px;color:#e2e8f0}
+
+.ctrl{display:flex;align-items:center;justify-content:space-between;background:#161b27;border:0.5px solid #2a3244;border-radius:10px;padding:.7rem 1rem;margin-bottom:1.25rem;gap:8px;flex-wrap:wrap}
+.ctrl-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.panel-title{font-size:18px;font-weight:500;color:#94a3b8;white-space:nowrap}
+.shuffle-badge{font-size:11px;background:#0d2b1a;color:#3dd68c;border:0.5px solid #3dd68c44;border-radius:99px;padding:2px 10px;display:none}
+.shuffle-badge.on{display:inline-block}
+.review-badge{font-size:11px;background:#2b1a0d;color:#f59e0b;border:0.5px solid #f59e0b44;border-radius:99px;padding:2px 10px;display:none}
+.review-badge.on{display:inline-block}
+
+.rnd-btn{display:flex;align-items:center;gap:6px;padding:.42rem .9rem;background:#1a2a40;border:0.5px solid #3a6ea8;border-radius:8px;color:#60a5fa;font-size:16px;font-weight:500;cursor:pointer;transition:background .15s;white-space:nowrap}
+.rnd-btn:hover{background:#1e3554;border-color:#60a5fa}
+.rnd-btn svg{transition:transform .4s}
+.rnd-btn:hover svg{transform:rotate(180deg)}
+
+.review-btn{display:flex;align-items:center;gap:6px;padding:.42rem .9rem;background:#2b1a0d;border:0.5px solid #f59e0b55;border-radius:8px;color:#f59e0b;font-size:16px;font-weight:500;cursor:pointer;transition:background .15s;white-space:nowrap;position:relative}
+.review-btn:hover{background:#3a2310;border-color:#f59e0b}
+.review-btn:disabled{opacity:.35;cursor:default}
+.review-btn .rbadge{position:absolute;top:-7px;right:-7px;background:#f59e0b;color:#0f1117;font-size:10px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;display:none}
+.review-btn .rbadge.show{display:flex}
+
+.combo-wrap{position:relative}
+.combo-trigger{display:flex;align-items:center;gap:7px;padding:.42rem .85rem;background:#12192a;border:0.5px solid #2a3244;border-radius:8px;color:#94a3b8;font-size:16px;cursor:pointer;user-select:none;white-space:nowrap;min-width:155px;transition:border-color .15s}
+.combo-trigger:hover{border-color:#3a4a6b;color:#cbd5e1}
+.combo-trigger.open{border-color:#60a5fa;color:#e2e8f0}
+.combo-dot{width:8px;height:8px;border-radius:50%;background:#3dd68c;flex-shrink:0}
+.combo-lbl{flex:1}
+.combo-arr{opacity:.5;transition:transform .2s}
+.combo-trigger.open .combo-arr{transform:rotate(180deg)}
+.combo-dd{display:none;position:absolute;top:calc(100% + 5px);left:0;min-width:100%;background:#161b27;border:0.5px solid #2a3244;border-radius:10px;overflow:hidden;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.combo-dd.open{display:block}
+.combo-opt{display:flex;align-items:center;gap:8px;padding:.5rem .85rem;font-size:13px;color:#94a3b8;cursor:pointer;border-bottom:0.5px solid #1e2433;transition:background .1s}
+.combo-opt:last-child{border-bottom:none}
+.combo-opt:hover{background:#1e2433;color:#e2e8f0}
+.combo-opt.sel{background:#192030;color:#e2e8f0}
+.opt-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.opt-cnt{margin-left:auto;font-size:10px;opacity:.4;background:#2a3244;padding:1px 7px;border-radius:99px}
+
+.score-bar{display:flex;gap:10px;margin-bottom:1.25rem}
+.sc{flex:1;background:#161b27;border:0.5px solid #2a3244;border-radius:10px;padding:.65rem 1rem;text-align:center}
+.sc-num{font-size:20px;font-weight:500;color:#e2e8f0}
+.sc-lbl{font-size:11px;color:#64748b;margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+
+.mode-banner{display:none;align-items:center;gap:10px;background:#2b1a0d;border:0.5px solid #f59e0b44;border-radius:10px;padding:.65rem 1rem;margin-bottom:1.1rem;font-size:14px;color:#f59e0b}
+.mode-banner.show{display:flex}
+.mode-banner svg{flex-shrink:0}
+.mode-banner-txt{flex:1}
+.mode-exit{padding:.3rem .75rem;background:transparent;border:0.5px solid #f59e0b55;border-radius:6px;color:#f59e0b;font-size:12px;cursor:pointer;transition:background .15s}
+.mode-exit:hover{background:#3a2310}
+
+.q-list{display:flex;flex-direction:column;gap:1.1rem}
+.q-card{background:#161b27;border:0.5px solid #2a3244;border-radius:12px;padding:1.1rem 1.2rem;transition:border-color .2s}
+.q-card.answered-correct{border-color:#3dd68c44}
+.q-card.answered-wrong{border-color:#f8717144}
+.q-card.review-card{border-color:#f59e0b44;background:#1a1208}
+
+.q-meta{display:flex;align-items:center;gap:8px;margin-bottom:.65rem;flex-wrap:wrap}
+.q-idx{font-size:15px;color:#64748b}
+.q-topic-pill{font-size:15px;padding:2px 10px;border-radius:99px;border:0.5px solid #2a3244;color:#7c8db5;background:#1e2433}
+.wrong-pill{font-size:11px;padding:2px 8px;border-radius:99px;border:0.5px solid #f8717144;color:#f87171;background:#2b0d0d}
+
+.q-text{font-size:20px;font-weight:100;color:#e2e8f0;line-height:1.6;margin-bottom:.85rem}
+.q-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+.q-select-wrap{position:relative;flex:1;min-width:180px}
+.q-select{width:100%;padding:.5rem 2.2rem .5rem .85rem;background:#12192a;border:0.5px solid #2a3244;border-radius:8px;color:#94a3b8;font-size:16px;cursor:pointer;appearance:none;-webkit-appearance:none;outline:none;transition:border-color .15s}
+.q-select:hover{border-color:#3a4a6b;color:#cbd5e1}
+.q-select:focus{border-color:#60a5fa;color:#e2e8f0}
+.q-select option{background:#161b27;color:#e2e8f0}
+.select-arrow{position:absolute;right:.65rem;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.5}
+
+.check-btn{padding:.48rem 1rem;background:#1a4731;border:0.5px solid #3dd68c55;border-radius:8px;color:#3dd68c;font-size:13px;cursor:pointer;white-space:nowrap;transition:background .15s}
+.check-btn:hover{background:#1f5a3d}
+.check-btn:disabled{opacity:.35;cursor:default}
+
+.q-result{display:none;align-items:center;gap:6px;font-size:12px;margin-top:.6rem}
+.q-result.show{display:flex}
+.result-icon{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.result-correct .result-icon{background:#0d2b1a;color:#3dd68c;border:0.5px solid #3dd68c}
+.result-wrong .result-icon{background:#2b0d0d;color:#f87171;border:0.5px solid #f87171}
+.result-correct .result-txt{color:#3dd68c;font-size:16px}
+.result-wrong .result-txt{color:#f87171;font-size:16px}
+.result-reason{font-size:20px;color:#C8FF97;margin-top:.45rem;padding:.55rem .75rem;background:#0d1f2b;border-left:2px solid #3dd68c44;border-radius:0 6px 6px 0;display:none}
+.result-reason.show{display:block}
+
+.prev-answer-row{display:none;align-items:center;gap:6px;margin-bottom:.55rem;font-size:13px;color:#64748b}
+.prev-answer-row.show{display:flex}
+.prev-wrong-chip{background:#2b0d0d;color:#f87171;border:0.5px solid #f8717144;border-radius:6px;padding:2px 8px;font-size:12px}
+
+.submit-row{margin-top:1.5rem;display:flex;justify-content:center}
+.submit-btn{padding:.65rem 2rem;background:#1a4731;border:0.5px solid #3dd68c55;border-radius:10px;color:#3dd68c;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}
+.submit-btn:hover{background:#1f5a3d}
+
+.result-screen{text-align:center;padding:2rem 0}
+.result-score{font-size:52px;font-weight:500;color:#3dd68c}
+.result-label{font-size:17px;color:#64748b;margin:.5rem 0 1.5rem}
+.res-breakdown{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.5rem}
+.indicators{margin-bottom:1.5rem;line-height:2}
+.q-dot{display:inline-block;width:16px;height:16px;border-radius:50%;margin:2px;cursor:default}
+.res-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.res-btn{padding:.6rem 1.3rem;border-radius:10px;font-size:13px;cursor:pointer}
+</style>
+
+<div id="app">
+  <div class="ctrl">
+    <div class="ctrl-left">
+      <span class="panel-title">DNA Synthesis and Replication MCQ</span>
+      <span class="shuffle-badge" id="sbadge">✦ Shuffled</span>
+      <span class="review-badge" id="rbadge">⚑ Review Mode</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="combo-wrap" id="cwrap">
+        <div class="combo-trigger" id="ctrig" onclick="toggleDD()">
+          <span class="combo-dot" id="cdot"></span>
+          <span class="combo-lbl" id="clbl">All Topics</span>
+          <svg class="combo-arr" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="combo-dd" id="cdd"></div>
+      </div>
+
+      <button class="review-btn" id="review-btn" onclick="startReview()" disabled title="Review wrongly answered questions">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Review
+        <span class="rbadge" id="wrong-count-badge"></span>
+      </button>
+
+      <button class="rnd-btn" onclick="randomize()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
+          <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+        </svg>
+        Randomize
+      </button>
+    </div>
+  </div>
+
+  <div class="mode-banner" id="mode-banner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span class="mode-banner-txt" id="mode-banner-txt"></span>
+    <button class="mode-exit" onclick="exitReview()">✕ Exit review</button>
+  </div>
+
+  <div class="score-bar">
+    <div class="sc"><div class="sc-num" id="sc-total">0</div><div class="sc-lbl">Total</div></div>
+    <div class="sc"><div class="sc-num" id="sc-correct" style="color:#3dd68c">0</div><div class="sc-lbl">Correct</div></div>
+    <div class="sc"><div class="sc-num" id="sc-wrong" style="color:#f87171">0</div><div class="sc-lbl">Wrong</div></div>
+    <div class="sc"><div class="sc-num" id="sc-pct">—</div><div class="sc-lbl">Score %</div></div>
+  </div>
+
+  <div id="q-list" class="q-list"></div>
+  <div class="submit-row" id="submit-row" style="display:none">
+    <button class="submit-btn" onclick="submitAll()">Submit all &amp; see results</button>
+  </div>
+  <div id="result-screen" class="result-screen" style="display:none"></div>
+</div>
+
+<script>
+
+
+
+const MASTER=[
+  {topic:"DNA Replication",q:"During DNA replication, enzymes called DNA helicases function to:",cs:["Join new nucleotides together","Break weak hydrogen bonds between complementary bases to separate the strands","Condense chromatin","Digest damaged proteins"],c:1,r:"DNA helicases break the hydrogen bonds between paired bases. This creates two free strands at a replication fork."},
+  {topic:"DNA Replication",q:"According to complementary base pairing during replication, adenine bases pair with:",cs:["Guanine-containing nucleotides","Thymine-containing nucleotides","Cytosine-containing nucleotides","Uracil-containing nucleotides"],c:1,r:"Adenine pairs with thymine-containing nucleotides during DNA replication. Guanine pairs with cytosine-containing nucleotides."},
+  {topic:"DNA Replication",q:"The enzymes that join new nucleotides together to form a complementary polynucleotide chain are called:",cs:["DNA helicases","DNA polymerases","RNA polymerases","Aminoacyl-tRNA synthetases"],c:1,r:"DNA polymerases join nucleotides together to form the new complementary strand. This produces two complete double-helix DNA molecules."},
+  {topic:"DNA Replication",q:"DNA replication is described as \"semiconservative\" because:",cs:["Each new DNA molecule contains one new strand and one strand from the original molecule","Both strands of each new molecule are entirely new","DNA is only partially copied each time","Only RNA, not DNA, is conserved"],c:0,r:"Semiconservative replication means each new DNA molecule retains one original strand paired with one newly synthesized strand. Half of the original DNA is \"conserved\" in each copy."},
+  {topic:"DNA Replication",q:"DNA is unique among molecules in the body because it is the only type of molecule capable of:",cs:["Forming enzymes","Replicating itself","Binding to ribosomes","Undergoing oxidation"],c:1,r:"DNA is the only molecule in the body capable of self-replication. This property is essential for passing genetic information to daughter cells."},
+
+  {topic:"Cell Cycle",q:"The nondividing part of a cell's life cycle, during which chromosomes are extended and genes direct RNA synthesis, is called:",cs:["Mitosis","Interphase","Meiosis","Cytokinesis"],c:1,r:"Interphase is the nondividing phase of the cell cycle, subdivided into G1, S, and G2. During this time, chromosomes remain extended and actively direct RNA synthesis."},
+  {topic:"Cell Cycle",q:"During the G1 phase of interphase, a cell primarily:",cs:["Replicates its DNA","Performs physiological functions characteristic of its tissue and may grow","Divides into two daughter cells","Condenses its chromatin into visible chromosomes"],c:1,r:"In G1, cells perform normal tissue-specific functions and may grow, rather than replicating DNA. DNA replication occurs later, in the S phase."},
+  {topic:"Cell Cycle",q:"DNA replication occurs during which phase of interphase?",cs:["G1 phase","S phase","G2 phase","M phase"],c:1,r:"The S phase (\"S\" for synthesis) is when a cell replicates its DNA if it is going to divide. This follows G1 and precedes G2."},
+  {topic:"Cell Cycle",q:"After DNA replication, chromatin condenses into short, thick structures by the end of which phase?",cs:["G1 phase","S phase","G2 phase","Prophase"],c:2,r:"Chromatin condensation into short, thick structures occurs by the end of the G2 phase. However, chromosomes are not yet visible in their familiar form under a light microscope at this point."},
+  {topic:"Cell Cycle",q:"How often is the epidermis of the skin typically renewed?",cs:["Every two to three days","Approximately every two weeks","Every six months","Never, once formed"],c:1,r:"The epidermis is renewed approximately every two weeks. This reflects the frequent cell division occurring in skin tissue."},
+  {topic:"Cell Cycle",q:"How often is the stomach lining typically renewed?",cs:["Every two to three days","Approximately every two weeks","Every month","Every year"],c:0,r:"The stomach lining is renewed every two to three days. This is even more frequent than skin renewal, due to the harsh digestive environment."},
+  {topic:"Cell Cycle",q:"Which cell type in the adult body does not divide at all?",cs:["Epithelial cells of the stomach","Epidermal skin cells","Striated muscle cells","Bone marrow stem cells"],c:2,r:"Striated muscle cells in the adult do not divide. This is why muscle growth occurs through hypertrophy rather than an increase in cell number."},
+
+  {topic:"Cyclins & p53",q:"Cyclin D proteins promote progression through the G1 phase by:",cs:["Inhibiting DNA polymerase","Activating cyclin-dependent kinases","Breaking down telomeres","Producing ubiquitin"],c:1,r:"Cyclin D activates cyclin-dependent kinases, which are otherwise inactive enzymes. This action moves the cell quickly through the G1 phase."},
+  {topic:"Cyclins & p53",q:"Genes that contribute to cancer, often as mutated forms of normal genes, are called:",cs:["Tumor suppressor genes","Oncogenes","Housekeeping genes","Structural genes"],c:1,r:"Oncogenes are mutated versions of normal proto-oncogenes that promote cancer. Overexpression of cyclin D1, for example, is linked to some cancers."},
+  {topic:"Cyclins & p53",q:"The normal, unmutated form of a gene that can become an oncogene is called a:",cs:["Tumor suppressor gene","Proto-oncogene","Housekeeping gene","Cyclin-dependent kinase"],c:1,r:"Proto-oncogenes are normal, functional genes in healthy cells. They become oncogenes only when mutated."},
+  {topic:"Cyclins & p53",q:"The tumor suppressor gene p53 codes for a protein that primarily functions as a:",cs:["Structural protein","Transcription factor that can activate or repress many genes","Digestive enzyme","Motor protein"],c:1,r:"p53 is a transcription factor, meaning it binds DNA to activate or repress numerous genes. Its name reflects the protein's molecular weight of 53,000."},
+  {topic:"Cyclins & p53",q:"When DNA is damaged, p53 acts to stall cell division mainly at which checkpoint?",cs:["G2 to M checkpoint","G1 to S checkpoint","Metaphase to anaphase checkpoint","Telophase checkpoint"],c:1,r:"p53 primarily stalls the cell cycle at the G1 to S checkpoint when DNA is damaged. This prevents replication of damaged DNA."},
+  {topic:"Cyclins & p53",q:"Depending on the situation, p53 can help repair DNA during cell cycle arrest, or it can instead promote:",cs:["Mitosis","Apoptosis","Meiosis","Hypertrophy"],c:1,r:"If DNA damage cannot be repaired, p53 can promote apoptosis. This prevents the damaged DNA from being passed on to daughter cells."},
+  {topic:"Cyclins & p53",q:"Mutated p53 genes are found in what proportion of all cancers?",cs:["Less than 5%","About 25%","Over 50%","100%"],c:2,r:"Mutated p53 genes are found in over 50% of all cancers. This underscores p53's central role as a tumor suppressor."},
+  {topic:"Cyclins & p53",q:"The 2007 Nobel Prize in Physiology or Medicine was awarded for the development of:",cs:["RNA interference","Knockout mice","The Human Genome Project","Apoptosis discovery"],c:1,r:"Knockout mice, in which a specific gene is inactivated, earned the 2007 Nobel Prize. This technique uses mouse embryonic stem cells to study gene function, such as that of p53."},
+  {topic:"Cyclins & p53",q:"A mouse developed from an embryo containing both normal and mutant embryonic stem cells is called a:",cs:["Clone","Chimera","Hybrid","Zygote"],c:1,r:"Such a mouse is called a chimera, a mixture of normal and mutant cell types. Its gametes may carry the inactivated gene, allowing it to be passed to offspring."},
+
+  {topic:"Cell Death",q:"Pathological cell death in which cells deprived of blood supply swell and rupture their membranes is called:",cs:["Apoptosis","Necrosis","Meiosis","Hyperplasia"],c:1,r:"Necrosis is pathological cell death characterized by swelling and membrane rupture. This differs from the more controlled process of apoptosis."},
+  {topic:"Cell Death",q:"During apoptosis, cells characteristically:",cs:["Swell and burst","Shrink, with membranes remaining intact but bubbled, and nuclei condensing","Divide uncontrollably","Fuse with neighboring cells"],c:1,r:"In apoptosis, cells shrink rather than swell, with intact but bubbled membranes and condensing nuclei. This orderly process differs sharply from necrosis."},
+  {topic:"Cell Death",q:"The term \"apoptosis\" is derived from a Greek term describing:",cs:["The shedding of leaves from a tree","The bursting of a cell","The joining of two cells","The splitting of DNA"],c:0,r:"Apoptosis comes from a Greek term for the shedding of leaves from a tree. This reflects the controlled, natural nature of the process."},
+  {topic:"Cell Death",q:"The discovery of apoptosis was recognized with the Nobel Prize in Physiology or Medicine in which year?",cs:["2001","2002","2006","2007"],c:1,r:"Apoptosis researchers received the Nobel Prize in Physiology or Medicine in 2002. This recognized the importance of programmed cell death."},
+  {topic:"Cell Death",q:"In the extrinsic pathway of apoptosis, extracellular death ligands bind to plasma membrane receptors called:",cs:["Cyclins","Death receptors","Telomerases","Chaperones"],c:1,r:"Death ligands bind to death receptors on the plasma membrane in the extrinsic apoptosis pathway. FAS and FASL are a well-known example of this receptor-ligand pair."},
+  {topic:"Cell Death",q:"In the intrinsic pathway of apoptosis, cellular stress causes cytochrome c to leak from where into the cytoplasm?",cs:["The nucleus","The outer mitochondrial membrane","The Golgi complex","The lysosome"],c:1,r:"Cellular stress makes the outer mitochondrial membrane permeable, releasing cytochrome c into the cytoplasm. This triggers the next phase of the intrinsic apoptosis pathway."},
+  {topic:"Cell Death",q:"Both the extrinsic and intrinsic apoptosis pathways converge on the activation of a group of enzymes called:",cs:["Kinases","Caspases","Polymerases","Synthetases"],c:1,r:"Caspases are activated by both apoptosis pathways and are called the \"executioners\" of the cell. They fragment DNA and lead to cell death."},
+  {topic:"Cell Death",q:"A neutrophil is normally programmed to die by apoptosis how long after its creation in the bone marrow?",cs:["1 hour","24 hours","1 week","1 month"],c:1,r:"Neutrophils are programmed to die by apoptosis about 24 hours after formation. This is a normal part of immune cell turnover."},
+  {topic:"Cell Death",q:"A killer T lymphocyte destroys targeted cells by:",cs:["Directly rupturing their membranes","Triggering their apoptosis","Consuming them via phagocytosis","Blocking their mitochondria"],c:1,r:"Killer T lymphocytes destroy target cells by triggering apoptosis rather than direct rupture. This is a key mechanism of immune cell-mediated killing."},
+  {topic:"Cell Death",q:"If the p53 gene is mutated and ineffective, a cell with damaged DNA will most likely:",cs:["Undergo apoptosis as normal","Divide and produce daughter cells with damaged DNA","Immediately repair its own DNA perfectly","Become a stem cell"],c:1,r:"With ineffective p53, a damaged cell fails to undergo apoptosis and instead divides. This can propagate damaged DNA and contribute to cancer development."},
+
+  {topic:"Mitosis",q:"At the end of the G2 phase, each chromosome consists of two strands called chromatids joined together by a structure called the:",cs:["Kinetochore","Centromere","Centrosome","Telomere"],c:1,r:"Chromatids are joined by a centromere. This structure is essential for proper chromosome alignment and separation during mitosis."},
+  {topic:"Mitosis",q:"Mitosis, or the M phase of the cell cycle, is subdivided into which four stages, in order?",cs:["Interphase, S phase, G2, cytokinesis","Prophase, metaphase, anaphase, telophase","Prophase I, metaphase I, anaphase I, telophase I","G1, S, G2, M"],c:1,r:"Mitosis proceeds through prophase, metaphase, anaphase, and telophase in order. Each stage represents a distinct part of chromosome separation."},
+  {topic:"Mitosis",q:"During which stage of mitosis do chromosomes first become visible as distinctive structures?",cs:["Metaphase","Prophase","Anaphase","Telophase"],c:1,r:"Chromosomes become visible as distinct structures during prophase. This marks the beginning of the visible stages of mitosis."},
+  {topic:"Mitosis",q:"In metaphase of mitosis, chromosomes line up single file along the equator due to the action of:",cs:["Spindle fibers attached to the kinetochore at the centromere","Ubiquitin tagging","Telomerase activity","Cyclin degradation"],c:0,r:"Spindle fibers attach to the kinetochore, a protein structure at the centromere. This aligns chromosomes single file at the cell's equator during metaphase."},
+  {topic:"Mitosis",q:"Anaphase of mitosis begins when:",cs:["Chromosomes first become visible","Centromeres split apart and spindle fibers pull chromatids to opposite poles","Cytokinesis is complete","DNA is first replicated"],c:1,r:"Anaphase begins with the splitting of centromeres. Spindle fibers then shorten, pulling the separated chromatids toward opposite poles."},
+  {topic:"Mitosis",q:"Division of the cytoplasm, resulting in two genetically identical daughter cells, is called:",cs:["Meiosis","Cytokinesis","Crossing-over","Hyperplasia"],c:1,r:"Cytokinesis is the division of the cytoplasm that occurs during early telophase. It produces two daughter cells identical to each other and the parent cell."},
+  {topic:"Mitosis",q:"How many chromosomes does each pole of a dividing cell receive during mitotic anaphase?",cs:["23","46","69","92"],c:1,r:"Each pole receives one copy of each of the 46 chromosomes during mitotic anaphase. This ensures both daughter cells are genetically identical to the parent."},
+
+  {topic:"Centrosome",q:"The centrosome in a nondividing cell is typically located:",cs:["Inside the nucleus","Near the nucleus","In the mitochondria","At the plasma membrane only"],c:1,r:"The centrosome is located near the nucleus in a nondividing cell. It contains structures important for organizing microtubules."},
+  {topic:"Centrosome",q:"At the center of the centrosome are two structures positioned at right angles to each other, called:",cs:["Nucleosomes","Centrioles","Chromatids","Kinetochores"],c:1,r:"Two centrioles, positioned at right angles, sit at the center of the centrosome. Each centriole is composed of bundles of microtubules."},
+  {topic:"Centrosome",q:"Each centriole is composed of how many bundles of microtubules, with how many microtubules per bundle?",cs:["9 bundles, 3 microtubules each","3 bundles, 9 microtubules each","6 bundles, 2 microtubules each","2 bundles, 9 microtubules each"],c:0,r:"Each centriole has nine evenly spaced bundles, with three microtubules per bundle. This arrangement is consistent across centrioles."},
+  {topic:"Centrosome",q:"The amorphous material surrounding the two centrioles, believed to organize cytoskeletal microtubules, is called the:",cs:["Pericentriolar material","Chromatin","Kinetochore","Cisterna"],c:0,r:"The pericentriolar material surrounds the centrioles and organizes microtubule growth. It functions as a center for cytoskeletal microtubule organization."},
+  {topic:"Centrosome",q:"During interphase, if a cell is going to divide, the centrosome:",cs:["Disappears entirely","Replicates itself","Fuses with the nucleus","Converts into a lysosome"],c:1,r:"The centrosome replicates itself during interphase in preparation for cell division. The two resulting centrosomes later move to opposite poles."},
+  {topic:"Centrosome",q:"The contractile filaments that pinch the cell in two during telophase are composed of the same proteins found in muscle, namely:",cs:["Tubulin and keratin","Actin and myosin","Histone and ubiquitin","Kinesin and dynein"],c:1,r:"The contractile ring is composed of actin and myosin, the same proteins responsible for muscle contraction. Their contraction physically divides the cell in two."},
+
+  {topic:"Telomeres",q:"Normal connective tissue cells (fibroblasts) from a newborn will typically divide how many times in vitro?",cs:["5 to 10 times","20 to 30 times","80 to 90 times","Indefinitely"],c:2,r:"Fibroblasts from a newborn can divide 80 to 90 times in culture. This capacity decreases significantly with age."},
+  {topic:"Telomeres",q:"Fibroblasts from a 70-year-old will typically stop dividing after approximately how many divisions?",cs:["80 to 90","50 to 60","20 to 30","Indefinitely"],c:2,r:"Cells from older individuals stop dividing after only 20 to 30 divisions. This decline reflects cellular senescence associated with aging."},
+  {topic:"Telomeres",q:"Cells that become cancerous, unlike normal cells, generally:",cs:["Stop dividing after a fixed number of divisions","Continue dividing indefinitely in culture","Cannot divide at all","Undergo apoptosis rapidly"],c:1,r:"Cancer cells appear not to age and can divide indefinitely in culture. This is in contrast to normal cells, which have a limited replicative capacity."},
+  {topic:"Telomeres",q:"Telomeres are DNA sequences located at the:",cs:["Center of each chromosome","Ends of chromosomes","Nucleolus only","Mitochondrial DNA only"],c:1,r:"Telomeres are located at the ends of chromosomes. They function as protective caps for the DNA."},
+  {topic:"Telomeres",q:"The primary function of telomeres is to:",cs:["Code for specific proteins","Prevent enzymes from mistaking chromosome ends for broken DNA","Store excess RNA","Anchor the centrosome"],c:1,r:"Telomeres cap chromosome ends, preventing repair enzymes from mistakenly treating them as damaged DNA. This protects the chromosome from inappropriate repair attempts."},
+  {topic:"Telomeres",q:"Each time a chromosome replicates, approximately how many base pairs are lost from its telomeres?",cs:["1 to 5","50 to 100","1,000 to 2,000","None; telomeres are fully copied"],c:1,r:"Chromosomes lose 50 to 100 base pairs from their telomeres with each replication. This occurs because DNA polymerase cannot fully copy the end regions."},
+  {topic:"Telomeres",q:"Which enzyme duplicates telomere DNA, allowing certain cells like germinal cells to divide indefinitely?",cs:["DNA polymerase","Telomerase","RNA polymerase","Helicase"],c:1,r:"Telomerase duplicates telomere DNA, counteracting the normal shortening that occurs with each division. Germinal cells, stem cells, and many cancer cells produce this enzyme."},
+  {topic:"Telomeres",q:"Besides germinal cells, which of the following also commonly produces telomerase?",cs:["Mature red blood cells","Hematopoietic stem cells and most cancer cells","Striated muscle cells only","Mature neurons only"],c:1,r:"Hematopoietic stem cells and most cancer cells produce telomerase. This enzyme may explain the indefinite division capacity seen in these cell types."},
+
+  {topic:"Hypertrophy & Hyperplasia",q:"Growth of a tissue due to an increase in the number of cells is called:",cs:["Hypertrophy","Hyperplasia","Atrophy","Meiosis"],c:1,r:"Hyperplasia is growth resulting from an increased rate of mitotic cell division, producing more cells. This differs from hypertrophy, which involves larger individual cells."},
+  {topic:"Hypertrophy & Hyperplasia",q:"Growth of a tissue due to an increase in the size of individual cells is called:",cs:["Hyperplasia","Hypertrophy","Necrosis","Apoptosis"],c:1,r:"Hypertrophy refers to growth from increased cell size rather than increased cell number. It is the only growth mechanism available to cells like skeletal and cardiac muscle."},
+  {topic:"Hypertrophy & Hyperplasia",q:"A callus forming on the palm from frequent abrasion is an example of:",cs:["Hypertrophy","Hyperplasia","Atrophy","Necrosis"],c:1,r:"A callus develops through hyperplasia, a thickening of skin from increased cell division. This is distinct from hypertrophy, which involves cell enlargement."},
+  {topic:"Hypertrophy & Hyperplasia",q:"An increase in skeletal muscle size due to exercise is an example of:",cs:["Hyperplasia","Hypertrophy","Meiosis","Apoptosis"],c:1,r:"Exercise-induced muscle growth occurs via hypertrophy, since muscle cells increase in size rather than number. Most other tissue growth, by contrast, is due to hyperplasia."},
+  {topic:"Hypertrophy & Hyperplasia",q:"Skeletal and cardiac muscle can grow only by which mechanism?",cs:["Hyperplasia","Hypertrophy","Both equally","Neither; they cannot grow"],c:1,r:"Skeletal and cardiac muscle grow only through hypertrophy, since these cells generally do not divide. Increased workload leads to compensatory hypertrophy."},
+  {topic:"Hypertrophy & Hyperplasia",q:"The wasting or decrease in size of a cell, tissue, or organ, the opposite of hypertrophy, is called:",cs:["Atrophy","Hyperplasia","Necrosis","Apoptosis"],c:0,r:"Atrophy is the opposite of hypertrophy, referring to tissue or organ wasting. This can result from disuse, disease, or advanced age."},
+  {topic:"Hypertrophy & Hyperplasia",q:"Compensatory hypertrophy of the heart may occur in response to increased workload caused by:",cs:["Hypertension (high blood pressure)","Low blood sugar","Vitamin deficiency","Dehydration"],c:0,r:"Hypertension increases the heart's workload, leading to compensatory hypertrophy of the heart muscle. This is the heart's adaptive response to sustained higher pressure demands."},
+
+  {topic:"Meiosis",q:"Meiosis is a special type of cell division that occurs only in the:",cs:["Skin and muscle","Gonads (testes and ovaries)","Liver and kidney","Bone marrow"],c:1,r:"Meiosis occurs only in the gonads, producing gametes. This distinguishes it from mitosis, which occurs throughout the body for growth and repair."},
+  {topic:"Meiosis",q:"Chromosomes that are matched pairs, one derived from the father and one from the mother, are called:",cs:["Chromatids","Homologous chromosomes","Centrioles","Nucleosomes"],c:1,r:"Homologous chromosomes are matched pairs, one paternal and one maternal in origin. They are structurally similar but do not have identical DNA sequences."},
+  {topic:"Meiosis",q:"How many pairs of autosomal chromosomes and how many pairs of sex chromosomes do humans have?",cs:["22 autosomal pairs, 1 sex chromosome pair","23 autosomal pairs, 0 sex chromosome pairs","20 autosomal pairs, 3 sex chromosome pairs","46 autosomal pairs, 1 sex chromosome pair"],c:0,r:"Humans have 22 pairs of autosomal chromosomes plus one pair of sex chromosomes. This totals 46 chromosomes, or 23 pairs."},
+  {topic:"Meiosis",q:"In the first meiotic division, homologous chromosomes line up:",cs:["Single file along the equator","Side by side along the equator","Randomly throughout the cell","Only at the poles"],c:1,r:"In meiosis I, homologous chromosomes line up side by side, unlike the single-file arrangement in mitosis. This side-by-side pairing allows separation of homologous pairs."},
+  {topic:"Meiosis",q:"After the first meiotic division, each daughter cell contains how many chromosomes?",cs:["46","23","92","69"],c:1,r:"Each daughter cell contains 23 chromosomes after the first meiotic division. This is why meiosis is also called reduction division."},
+  {topic:"Meiosis",q:"Meiosis is also known as \"reduction division\" because it:",cs:["Doubles the chromosome number","Reduces the chromosome number from 46 to 23","Eliminates all chromosomes","Only occurs in reduced organisms"],c:1,r:"Meiosis reduces the chromosome number from 46 to 23. This reduction (Greek: meion = less) is essential so that fertilization restores the normal chromosome number."},
+  {topic:"Meiosis",q:"How many daughter cells (sperm cells) are ultimately produced from one parent cell in the testes through meiosis?",cs:["1","2","4","8"],c:2,r:"Meiosis in the testes produces four sperm cells from one parent cell. In the ovaries, four daughter cells also form, but only one typically matures into an egg."},
+  {topic:"Meiosis",q:"In the ovaries, meiosis of one parent cell produces four daughter cells, but typically only how many become a mature egg?",cs:["All four","Three","Two","One"],c:3,r:"Only one of the four daughter cells typically matures into an egg cell. The other three die, unlike the process in the testes where all four become sperm."},
+  {topic:"Meiosis",q:"The exchange of parts of homologous chromosomes during prophase I is called:",cs:["Cytokinesis","Crossing-over","Telomerization","Semiconservative replication"],c:1,r:"Crossing-over is the exchange of chromosome segments between homologous pairs during prophase I. This process contributes to genetic recombination."},
+  {topic:"Meiosis",q:"The random assortment of maternal and paternal chromosomes into daughter cells, along with crossing-over, ensures that gametes are:",cs:["Identical to the parent cell","Genetically unique","Non-functional","Always defective"],c:1,r:"Random chromosome shuffling and crossing-over together produce genetically unique gametes. This genetic recombination increases diversity in sexually reproducing organisms."},
+
+  {topic:"Epigenetic Inheritance",q:"Permanent silencing of genes that is carried forward to daughter cells without a change in DNA base sequence is called:",cs:["Genetic mutation","Epigenetic inheritance","Crossing-over","Semiconservative replication"],c:1,r:"Epigenetic inheritance refers to gene silencing passed to daughter cells without altering the DNA sequence itself. This silencing can occur in gametes or during early embryonic development."},
+  {topic:"Epigenetic Inheritance",q:"One mechanism of epigenetic gene silencing involves the addition of a CH3 group to cytosine bases, a process called:",cs:["Phosphorylation","Methylation","Acetylation","Ubiquitination"],c:1,r:"Methylation adds a CH3 group to cytosine bases in DNA, silencing genes. This is one of the main mechanisms of epigenetic inheritance."},
+  {topic:"Epigenetic Inheritance",q:"Posttranslational modifications of histone proteins, such as acetylation and methylation, influence gene expression by affecting:",cs:["The DNA base sequence directly","How tightly or loosely chromatin is compacted","The number of chromosomes","Telomere length"],c:1,r:"Histone modifications like acetylation and methylation affect chromatin compaction. This in turn influences whether genes in that region can be transcribed."},
+  {topic:"Epigenetic Inheritance",q:"Even identical twins can show differences in gene expression due to:",cs:["Different DNA sequences","Epigenetic changes from differing environments","Different numbers of chromosomes","Different blood types"],c:1,r:"Identical twins share the same DNA sequence but can accumulate different epigenetic changes over time. Environmental differences drive these variations in gene expression."},
+  {topic:"Epigenetic Inheritance",q:"Cancers often show a global reduction in DNA methylation, called hypomethylation, which is associated with:",cs:["Permanent gene silencing and chromosome stability","Activation of genes and instability of chromosome structure","No effect on gene expression","Increased telomerase inhibition only"],c:1,r:"Hypomethylation in cancer is associated with gene activation and chromosomal instability. This reflects the disruption of normal epigenetic regulation in tumor cells."},
+  {topic:"Epigenetic Inheritance",q:"Which of the following diseases is associated with problems in epigenetic inheritance?",cs:["Fragile X syndrome","Only bacterial infections","Broken bones","Common cold"],c:0,r:"Fragile X syndrome, along with cancer and systemic lupus erythematosus, is linked to epigenetic inheritance problems. These conditions involve disrupted gene silencing or regulation."},
+];
+
+const TOPIC_COLORS={
+  "All Topics":{dot:"#3dd68c"},
+  "DNA Replication":{dot:"#818cf8"},
+  "Cell Cycle":{dot:"#f59e0b"},
+  "Cyclins & p53":{dot:"#34d399"},
+  "Cell Death":{dot:"#f472b6"},
+  "Mitosis":{dot:"#38bdf8"},
+  "Centrosome":{dot:"#a78bfa"},
+  "Telomeres":{dot:"#fb7185"},
+  "Hypertrophy & Hyperplasia":{dot:"#facc15"},
+  "Meiosis":{dot:"#2dd4bf"},
+  "Epigenetic Inheritance":{dot:"#f97316"},
+};
+
+const ALL_TOPICS=["All Topics",...new Set(MASTER.map(q=>q.topic))];
+
+let selTopic="All Topics";
+let ddOpen=false;
+let quizItems=[];
+let userAnswers={};
+let checkedItems={};
+let isReviewMode=false;
+let wrongLog={};
+
+const LABELS=['A','B','C','D'];
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function buildItems(pool,doShuffle,forReview=false){
+  const src=doShuffle?shuffle([...pool]):[...pool];
+  return src.map((q,i)=>{
+    const indexed=q.cs.map((t,idx)=>({t,ok:idx===q.c}));
+    shuffle(indexed);
+    return{
+      id:forReview?q.origId:i,
+      origId:forReview?q.origId:i,
+      topic:q.topic,q:q.q,
+      choices:indexed.map(x=>x.t),
+      correct:indexed.findIndex(x=>x.ok),
+      reason:q.r,
+      prevWrongChoice:forReview?q.prevWrongChoice:null,
+      prevWrongText:forReview?q.prevWrongText:null,
+    };
+  });
+}
+
+function getPool(){return selTopic==="All Topics"?MASTER:MASTER.filter(q=>q.topic===selTopic)}
+
+function buildDropdown(){
+  const dd=document.getElementById('cdd');
+  dd.innerHTML='';
+  ALL_TOPICS.forEach(t=>{
+    const cnt=t==="All Topics"?MASTER.length:MASTER.filter(q=>q.topic===t).length;
+    const col=TOPIC_COLORS[t]||{dot:"#64748b"};
+    const el=document.createElement('div');
+    el.className='combo-opt'+(t===selTopic?' sel':'');
+    el.innerHTML=`<span class="opt-dot" style="background:${col.dot}"></span><span>${t}</span><span class="opt-cnt">${cnt}</span>`;
+    el.onclick=()=>pickTopic(t);
+    dd.appendChild(el);
+  });
+}
+
+function toggleDD(){ddOpen=!ddOpen;document.getElementById('cdd').classList.toggle('open',ddOpen);document.getElementById('ctrig').classList.toggle('open',ddOpen)}
+function closeDD(){ddOpen=false;document.getElementById('cdd').classList.remove('open');document.getElementById('ctrig').classList.remove('open')}
+function pickTopic(t){
+  selTopic=t;
+  const col=TOPIC_COLORS[t]||{dot:"#64748b"};
+  document.getElementById('clbl').textContent=t;
+  document.getElementById('cdot').style.background=col.dot;
+  buildDropdown();closeDD();
+  exitReviewSilent();
+  applyFilter(false);
+}
+document.addEventListener('click',e=>{if(!document.getElementById('cwrap').contains(e.target))closeDD()});
+
+function applyFilter(doShuffle){
+  isReviewMode=false;
+  quizItems=buildItems(getPool(),doShuffle);
+  userAnswers={};checkedItems={};
+  renderList();
+  document.getElementById('result-screen').style.display='none';
+  document.getElementById('q-list').style.display='flex';
+  document.getElementById('submit-row').style.display='flex';
+  document.getElementById('mode-banner').classList.remove('show');
+  document.getElementById('rbadge').classList.remove('on');
+  updateScore();
+  updateReviewBtn();
+}
+
+function randomize(){
+  const svg=document.querySelector('.rnd-btn svg');
+  svg.style.transform='rotate(360deg)';
+  setTimeout(()=>svg.style.transform='',500);
+  document.getElementById('sbadge').classList.add('on');
+  exitReviewSilent();
+  applyFilter(true);
+}
+
+function updateReviewBtn(){
+  const wrongKeys=Object.keys(wrongLog);
+  const btn=document.getElementById('review-btn');
+  const badge=document.getElementById('wrong-count-badge');
+  if(wrongKeys.length>0){
+    btn.disabled=false;
+    badge.textContent=wrongKeys.length;
+    badge.classList.add('show');
+  } else {
+    btn.disabled=true;
+    badge.classList.remove('show');
+  }
+}
+
+function startReview(){
+  if(Object.keys(wrongLog).length===0)return;
+  isReviewMode=true;
+  document.getElementById('sbadge').classList.remove('on');
+  document.getElementById('rbadge').classList.add('on');
+
+  const reviewPool=Object.values(wrongLog).map(w=>({
+    origId:w.origId,
+    topic:w.topic,
+    q:w.q,
+    cs:w.choices,
+    c:w.correctIdx,
+    r:w.reason,
+    prevWrongChoice:w.userAnswerIdx,
+    prevWrongText:w.userAnswerText,
+  }));
+
+  quizItems=buildItems(reviewPool,false,true);
+  userAnswers={};checkedItems={};
+
+  const banner=document.getElementById('mode-banner');
+  document.getElementById('mode-banner-txt').textContent=`Review mode — ${quizItems.length} wrongly answered question${quizItems.length>1?'s':''} from your last attempt. Try them again!`;
+  banner.classList.add('show');
+
+  document.getElementById('result-screen').style.display='none';
+  document.getElementById('q-list').style.display='flex';
+  document.getElementById('submit-row').style.display='flex';
+  renderList(true);
+  updateScore();
+}
+
+function exitReview(){
+  exitReviewSilent();
+  applyFilter(false);
+}
+function exitReviewSilent(){
+  isReviewMode=false;
+  document.getElementById('rbadge').classList.remove('on');
+  document.getElementById('mode-banner').classList.remove('show');
+}
+
+function renderList(isReview=false){
+  const list=document.getElementById('q-list');
+  list.innerHTML='';
+  quizItems.forEach((q,i)=>{
+    const col=TOPIC_COLORS[q.topic]||{dot:"#60a5fa"};
+    const card=document.createElement('div');
+    card.className='q-card'+(isReview?' review-card':'');
+    card.id='qcard-'+i;
+
+    const opts=q.choices.map((ch,ci)=>`<option value="${ci}">${LABELS[ci]}. ${ch}</option>`).join('');
+    const prevHtml=isReview&&q.prevWrongText
+      ?`<div class="prev-answer-row show">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span style="color:#64748b">Previous wrong answer:</span>
+          <span class="prev-wrong-chip">${q.prevWrongText}</span>
+        </div>`
+      :'';
+
+    card.innerHTML=`
+      <div class="q-meta">
+        <span class="q-idx">${isReview?'Review':'Q'}${i+1}${isReview?' of '+quizItems.length:' of '+quizItems.length}</span>
+        <span class="q-topic-pill" style="color:${col.dot};border-color:${col.dot}44">${q.topic}</span>
+        ${isReview?'<span class="wrong-pill">Previously wrong</span>':''}
+      </div>
+      ${prevHtml}
+      <div class="q-text">${q.q}</div>
+      <div class="q-row">
+        <div class="q-select-wrap">
+          <select class="q-select" id="sel-${i}" onchange="onSelect(${i},this.value)">
+            <option value="" disabled selected style="color:#64748b">— Select an answer —</option>
+            ${opts}
+          </select>
+          <svg class="select-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <button class="check-btn" id="chk-${i}" onclick="checkOne(${i})" disabled>Check</button>
+      </div>
+      <div class="q-result" id="res-${i}">
+        <div class="result-icon" id="res-icon-${i}"></div>
+        <span class="result-txt" id="res-txt-${i}"></span>
+      </div>
+      <div class="result-reason" id="reason-${i}">${q.reason}</div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function onSelect(i,val){
+  userAnswers[i]=parseInt(val);
+  const btn=document.getElementById('chk-'+i);
+  if(!checkedItems[i])btn.disabled=false;
+}
+
+function checkOne(i){
+  if(userAnswers[i]===undefined||checkedItems[i])return;
+  checkedItems[i]=true;
+  const q=quizItems[i];
+  const correct=userAnswers[i]===q.correct;
+  const card=document.getElementById('qcard-'+i);
+  const resEl=document.getElementById('res-'+i);
+  const icon=document.getElementById('res-icon-'+i);
+  const txt=document.getElementById('res-txt-'+i);
+  const reason=document.getElementById('reason-'+i);
+  const sel=document.getElementById('sel-'+i);
+  const btn=document.getElementById('chk-'+i);
+
+  sel.disabled=true;
+  btn.disabled=true;
+  btn.textContent=correct?'✓':'✗';
+  btn.style.background=correct?'#1a4731':'#2b0d0d';
+  btn.style.color=correct?'#3dd68c':'#f87171';
+  btn.style.borderColor=correct?'#3dd68c55':'#f8717155';
+
+  card.classList.remove('review-card');
+  card.classList.add(correct?'answered-correct':'answered-wrong');
+  resEl.className='q-result show '+(correct?'result-correct':'result-wrong');
+  icon.textContent=correct?'✓':'✗';
+  txt.textContent=correct
+    ?'Correct! '+LABELS[q.correct]+' is right.'
+    :`Wrong. Correct answer: ${LABELS[q.correct]}. ${q.choices[q.correct]}`;
+  reason.classList.add('show');
+
+  const masterKey=isReviewMode?q.origId:i;
+  if(!correct){
+    wrongLog[masterKey]={
+      origId:masterKey,
+      topic:q.topic,q:q.q,
+      choices:q.choices,
+      correctIdx:q.correct,
+      reason:q.reason,
+      userAnswerIdx:userAnswers[i],
+      userAnswerText:LABELS[userAnswers[i]]+'. '+q.choices[userAnswers[i]],
+    };
+  } else {
+    delete wrongLog[masterKey];
+  }
+
+  updateScore();
+  updateReviewBtn();
+}
+
+function updateScore(){
+  const total=Object.keys(checkedItems).length;
+  const cor=Object.keys(checkedItems).filter(i=>userAnswers[i]===quizItems[i].correct).length;
+  const wrg=total-cor;
+  const pct=total>0?Math.round((cor/total)*100)+'%':'—';
+  document.getElementById('sc-total').textContent=quizItems.length;
+  document.getElementById('sc-correct').textContent=cor;
+  document.getElementById('sc-wrong').textContent=wrg;
+  document.getElementById('sc-pct').textContent=pct;
+}
+
+function submitAll(){
+  quizItems.forEach((_,i)=>{
+    if(!checkedItems[i]&&userAnswers[i]!==undefined)checkOne(i);
+  });
+  const unanswered=quizItems.filter((_,i)=>userAnswers[i]===undefined&&!checkedItems[i]);
+  if(unanswered.length>0){
+    const el=document.getElementById('qcard-'+unanswered[0].id);
+    if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  showResult();
+}
+
+function showResult(){
+  document.getElementById('q-list').style.display='none';
+  document.getElementById('submit-row').style.display='none';
+  document.getElementById('mode-banner').classList.remove('show');
+  const rs=document.getElementById('result-screen');
+  rs.style.display='block';
+  const total=quizItems.length;
+  const cor=Object.keys(checkedItems).filter(i=>userAnswers[i]===quizItems[i].correct).length;
+  const wrong=total-cor;
+  const pct=total>0?Math.round((cor/total)*100):0;
+  const grade=pct>=90?'Excellent! 🎉':pct>=75?'Good work! 👍':pct>=60?'Keep studying! 📖':'Needs more review 💪';
+  const dots=quizItems.map((_,i)=>{
+    const ok=userAnswers[i]===quizItems[i].correct;
+    return`<span class="q-dot" style="background:${checkedItems[i]?(ok?'#3dd68c':'#f87171'):'#2a3244'}" title="Q${i+1}: ${checkedItems[i]?(ok?'Correct':'Wrong'):'Unanswered'}"></span>`;
+  }).join('');
+
+  const hasWrong=Object.keys(wrongLog).length>0;
+
+  rs.innerHTML=`
+    <div class="result-score">${cor}/${total}</div>
+    <div class="result-label">${pct}% — ${grade}</div>
+    <div class="res-breakdown">
+      <div class="sc"><div class="sc-num" style="color:#3dd68c">${cor}</div><div class="sc-lbl">Correct</div></div>
+      <div class="sc"><div class="sc-num" style="color:#f87171">${wrong}</div><div class="sc-lbl">Wrong</div></div>
+      <div class="sc"><div class="sc-num" style="color:#f59e0b">${Object.keys(wrongLog).length}</div><div class="sc-lbl">To review</div></div>
+    </div>
+    <div class="indicators">${dots}</div>
+    <div class="res-btns">
+      <button class="res-btn" onclick="restart()" style="background:#161b27;color:#cbd5e1;border:0.5px solid #2a3244">↺ Restart</button>
+      ${hasWrong?`<button class="res-btn" onclick="startReviewFromResult()" style="background:#2b1a0d;color:#f59e0b;border:0.5px solid #f59e0b55">⚑ Review ${Object.keys(wrongLog).length} wrong</button>`:''}
+      <button class="res-btn" onclick="randomize()" style="background:#1a2a40;color:#60a5fa;border:0.5px solid #3a6ea8">🔀 Randomize</button>
+    </div>`;
+}
+
+function startReviewFromResult(){
+  document.getElementById('result-screen').style.display='none';
+  startReview();
+}
+
+function restart(){
+  wrongLog={};
+  userAnswers={};checkedItems={};
+  isReviewMode=false;
+  quizItems=buildItems(getPool(),false);
+  renderList();
+  document.getElementById('result-screen').style.display='none';
+  document.getElementById('q-list').style.display='flex';
+  document.getElementById('submit-row').style.display='flex';
+  document.getElementById('sbadge').classList.remove('on');
+  document.getElementById('rbadge').classList.remove('on');
+  document.getElementById('mode-banner').classList.remove('show');
+  updateScore();
+  updateReviewBtn();
+}
+
+buildDropdown();
+document.getElementById('cdot').style.background=TOPIC_COLORS["All Topics"].dot;
+applyFilter(false);
+</script>
