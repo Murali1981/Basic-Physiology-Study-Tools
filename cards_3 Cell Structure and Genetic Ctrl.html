@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3 Cell Structure and Genetic Control </title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#ffd700;--gold-dim:#c9a800;--bg:#181818;--surface:#242424;--surface2:#2e2e2e;--text:#f0f0f0;--muted:#aaa;--radius:14px;--green:#4caf50;--red:#ef5350}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);text-align:center;padding:24px 16px 40px;min-height:100vh}
+.panel{background:var(--surface);border:1.5px solid #383838;border-radius:var(--radius);padding:16px 20px;max-width:860px;margin:0 auto 12px}
+.panel-label{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold-dim);margin-bottom:12px;text-align:left}
+.panel-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.combo-wrapper{position:relative;flex:1;min-width:200px;max-width:340px}
+.combo-wrapper::after{content:'▾';position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:14px;pointer-events:none}
+.styled-select{width:100%;padding:10px 36px 10px 14px;background:var(--bg);border:1.5px solid var(--gold-dim);border-radius:9px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;appearance:none;cursor:pointer}
+.styled-select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,215,0,0.12)}
+.styled-select option{background:var(--surface2);color:var(--text)}
+.seg-field{display:flex;align-items:center;gap:6px}
+.seg-field label{font-size:13px;color:var(--muted);white-space:nowrap}
+.seg-input{width:64px;padding:7px 10px;background:var(--bg);border:1.5px solid #444;border-radius:8px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;text-align:center}
+.seg-input:focus{outline:none;border-color:var(--gold)}
+.seg-divider{width:1px;height:28px;background:#444;margin:0 2px}
+.btn{padding:9px 18px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;background:var(--surface2);color:var(--text);border:1.5px solid #444;border-radius:9px;cursor:pointer;transition:all 0.18s;white-space:nowrap}
+.btn:hover{background:var(--gold);color:#181818;border-color:var(--gold)}
+.btn.primary{border-color:var(--gold-dim);color:var(--gold)}
+.btn.primary:hover{background:var(--gold);color:#181818}
+.btn.active{background:var(--gold);color:#181818;border-color:var(--gold)}
+.btn.contest-on{background:#c9a800;color:#181818;border-color:#c9a800}
+.btn.draw-on{background:#4caf50;color:#181818;border-color:#4caf50}
+.card-row{display:flex;align-items:center;justify-content:center;gap:14px;max-width:760px;margin:0 auto}
+.nav-btn{flex-shrink:0;width:52px;height:52px;border-radius:50%;font-size:20px;display:flex;align-items:center;justify-content:center;background:var(--surface2);color:var(--text);border:1.5px solid #444;cursor:pointer;transition:all 0.18s}
+.nav-btn:hover{background:var(--gold);color:#181818;border-color:var(--gold)}
+.flip-card{flex:1;max-width:580px;height:300px;perspective:1000px;cursor:pointer;position:relative}
+.flip-card-inner{position:relative;width:100%;height:100%;transition:transform 0.7s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
+.flip-card.flipped .flip-card-inner{transform:rotateY(180deg)}
+/* When a dropdown is open, flatten 3D so selects render on top */
+.flip-card.select-open{perspective:none}
+.flip-card.select-open .flip-card-inner{transform-style:flat}
+.flip-card.select-open.flipped .flip-card-inner{transform:rotateY(180deg)}
+.flip-card-front,.flip-card-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:18px;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.flip-card-front{background:var(--surface);border:2px solid #3a3a3a}
+.flip-card-front::before{content:'';position:absolute;inset:0;border-radius:18px;background:radial-gradient(ellipse at 30% 30%,rgba(255,215,0,0.04) 0%,transparent 70%)}
+.flip-card-back{background:linear-gradient(135deg,#1a3a5c,#1565c0);transform:rotateY(180deg);border:2px solid rgba(255,215,0,0.3)}
+.card-hint{position:absolute;top:14px;right:18px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.35;color:var(--gold)}
+
+.english { font-family: 'Playfair Display', serif; font-size: 25px; font-weight: 700; color:limegreen; }
+.hangul  { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; margin: 8px 0;color:antiquewhite; }
+.pron { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; margin: 8px 0;color:antiquewhite; }
+
+
+
+.progress{margin:8px 0 0;font-size:15px;color:var(--muted)}
+.progress span{color:var(--gold);font-weight:600}
+
+/* Memory */
+.mem-btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
+.mem-btn{padding:9px 16px;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;border-radius:9px;cursor:pointer;transition:all 0.18s;white-space:nowrap;border:2px solid transparent}
+.mem-btn[data-level="0"]{background:rgba(239,83,80,0.15);color:#ef9a9a;border-color:#ef5350}
+.mem-btn[data-level="1"]{background:rgba(255,152,0,0.15);color:#ffcc80;border-color:#ff9800}
+.mem-btn[data-level="2"]{background:rgba(41,182,246,0.15);color:#81d4fa;border-color:#29b6f6}
+.mem-btn[data-level="3"]{background:rgba(102,187,106,0.15);color:#a5d6a7;border-color:#66bb6a}
+.mem-btn[data-level="0"]:hover{background:#ef5350;color:#fff}
+.mem-btn[data-level="1"]:hover{background:#ff9800;color:#181818}
+.mem-btn[data-level="2"]:hover{background:#29b6f6;color:#181818}
+.mem-btn[data-level="3"]:hover{background:#66bb6a;color:#181818}
+.mem-btn .mem-count{display:inline-block;background:rgba(255,255,255,0.15);border-radius:10px;padding:1px 7px;font-size:11px;margin-left:6px}
+.mem-filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.card-mem-indicator{position:absolute;top:14px;left:18px;font-size:11px;font-weight:600;letter-spacing:1px;padding:3px 8px;border-radius:6px;opacity:0.9}
+.card-mem-indicator.level-0{background:rgba(239,83,80,0.25);color:#ef9a9a;border:1px solid #ef5350}
+.card-mem-indicator.level-1{background:rgba(255,152,0,0.25);color:#ffcc80;border:1px solid #ff9800}
+.card-mem-indicator.level-2{background:rgba(41,182,246,0.25);color:#81d4fa;border:1px solid #29b6f6}
+.card-mem-indicator.level-3{background:rgba(102,187,106,0.25);color:#a5d6a7;border:1px solid #66bb6a}
+.review-banner{background:rgba(255,215,0,0.06);border:1.5px solid rgba(255,215,0,0.25);border-radius:10px;padding:8px 16px;margin-bottom:10px;font-size:13px;color:var(--gold-dim);display:none}
+.review-banner span{color:var(--gold);font-weight:600}
+
+/* Settings panel (Card Range Filter collapsible) */
+.settings-panel-wrap{max-width:860px;margin:0 auto;overflow:hidden;max-height:0;transition:max-height 0.35s cubic-bezier(0.4,0,0.2,1),opacity 0.25s;opacity:0;pointer-events:none}
+.settings-panel-wrap.open{max-height:200px;opacity:1;pointer-events:auto}
+
+/* Menu bar */
+.menubar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;max-width:860px;margin:0 auto 14px;position:relative;z-index:100}
+.menu-item{position:relative}
+.menu-trigger{display:flex;align-items:center;gap:6px;padding:9px 16px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;background:var(--surface2);color:var(--gold);border:1.5px solid var(--gold-dim);border-radius:9px;cursor:pointer;transition:all 0.18s;white-space:nowrap;user-select:none}
+.menu-trigger:hover,.menu-item.open .menu-trigger{background:var(--gold);color:#181818;border-color:var(--gold)}
+.menu-arrow{font-size:11px;transition:transform 0.2s}
+.menu-item.open .menu-arrow{transform:rotate(180deg)}
+.menu-dropdown{display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:210px;background:var(--surface);border:1.5px solid #444;border-radius:11px;padding:6px;box-shadow:0 8px 32px rgba(0,0,0,0.55);z-index:200}
+.menu-item.open .menu-dropdown{display:block}
+.menu-section-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold-dim);padding:6px 10px 4px;pointer-events:none}
+.menu-divider{height:1px;background:#383838;margin:5px 0}
+.menu-opt{display:flex;align-items:center;width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;background:transparent;color:var(--text);border:none;border-radius:7px;cursor:pointer;transition:background 0.15s,color 0.15s;text-align:left;gap:6px}
+.menu-opt:hover{background:var(--surface2);color:var(--gold)}
+.menu-opt.active{background:rgba(255,215,0,0.12);color:var(--gold)}
+.mode-opt.active{background:rgba(255,215,0,0.15);color:var(--gold);font-weight:600}
+.export-opt{color:#a5d6a7}
+.export-opt:hover{background:rgba(102,187,106,0.15);color:#a5d6a7}
+.import-opt{color:#81d4fa}
+.import-opt:hover{background:rgba(41,182,246,0.15);color:#81d4fa}
+.danger-opt{color:#ef9a9a}
+.danger-opt:hover{background:rgba(239,83,80,0.15);color:#ef9a9a}
+.srs-menu-opt{color:#ef9a9a}
+.srs-menu-opt:hover{background:rgba(239,83,80,0.12);color:#ef9a9a}
+.srs-menu-opt.active-due{background:rgba(239,83,80,0.2);color:#ef9a9a;font-weight:600}
+.menu-status-msg{font-size:12px;color:var(--muted);padding:4px 8px;align-self:center}
+.contest-on-menu{background:rgba(201,168,0,0.15)!important;color:var(--gold)!important;font-weight:600}
+.draw-on-menu{background:rgba(76,175,80,0.15)!important;color:#a5d6a7!important;font-weight:600}
+
+/* SRS */
+.srs-chip{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;letter-spacing:0.8px;padding:3px 10px;border-radius:20px;white-space:nowrap;pointer-events:none}
+.srs-chip.new{background:rgba(255,215,0,0.12);color:var(--gold-dim);border:1px solid rgba(255,215,0,0.3)}
+.srs-chip.due{background:rgba(239,83,80,0.18);color:#ef9a9a;border:1px solid #ef5350}
+.srs-chip.soon{background:rgba(255,152,0,0.15);color:#ffcc80;border:1px solid #ff9800}
+.srs-chip.ok{background:rgba(102,187,106,0.15);color:#a5d6a7;border:1px solid #66bb6a}
+.srs-due-btn{border-color:#ef5350;color:#ef9a9a}
+.srs-due-btn:hover{background:#ef5350;color:#fff;border-color:#ef5350}
+.srs-due-btn.active-due{background:#ef5350;color:#fff;border-color:#ef5350}
+
+/* Draw panel */
+.draw-panel{background:var(--surface);border:1.5px solid #383838;border-radius:var(--radius);padding:16px 20px;max-width:860px;margin:0 auto 12px;display:none}
+.draw-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tb-label{font-size:12px;color:var(--muted);white-space:nowrap}
+.swatch{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex-shrink:0;transition:border-color 0.15s,transform 0.1s}
+.swatch.active{border-color:var(--text);transform:scale(1.18)}
+.d-sep{width:1px;height:24px;background:#444;margin:0 2px}
+.tb-btn{padding:5px 13px;font-size:13px;font-weight:500;border:1.5px solid #444;border-radius:9px;background:var(--surface2);color:var(--text);cursor:pointer;transition:all 0.18s;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.tb-btn:hover{background:var(--gold);color:#181818;border-color:var(--gold)}
+.tb-btn.erase-on{background:rgba(239,83,80,0.2);color:#ef9a9a;border-color:#ef5350}
+.draw-canvas{display:block;width:100%;border-radius:8px;background:#ffffff;border:0.5px solid #444;cursor:crosshair;touch-action:none}
+.size-row{display:flex;align-items:center;gap:8px}
+.size-row input[type=range]{width:80px}
+.dot-prev{width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.dot{border-radius:50%;background:var(--text);transition:width 0.1s,height 0.1s}
+
+/* Quiz */
+#quizSection{display:none;max-width:700px;margin:0 auto}
+.quiz-score-bar{display:flex;justify-content:center;gap:20px;margin-bottom:18px;font-size:14px}
+.score-item{display:flex;align-items:center;gap:6px}
+.score-dot{width:10px;height:10px;border-radius:50%}
+.score-dot.correct{background:var(--green)}
+.score-dot.wrong{background:var(--red)}
+.score-dot.remain{background:#555}
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:20px}
+.match-col{display:flex;flex-direction:column;gap:10px}
+.match-item{padding:14px 16px;border-radius:10px;border:2px solid #3a3a3a;background:var(--surface);cursor:pointer;font-size:18px;transition:border-color 0.15s,background 0.15s,transform 0.1s;user-select:none;line-height:1.3;min-height:56px;display:flex;align-items:center;justify-content:center;text-align:center}
+
+
+.match-item.question{font-family:'Playfair Display',serif;font-size:18px;border-color:#555}
+.match-item.answer{font-family:'Noto Serif KR',serif;font-size:18px}
+
+
+.match-item.question{font-family:'Playfair Display',serif;font-size:18px;border-color:#555;  color:paleturquoise;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;}
+.match-item.answer{font-family:'Noto Serif KR',serif;font-size:18px;  
+  color:lightskyblue;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+}
+
+
+.match-item:hover:not(.matched):not(.wrong-flash){border-color:var(--gold-dim);background:var(--surface2)}
+.match-item.selected{border-color:var(--gold);background:rgba(255,215,0,0.08);transform:scale(1.02)}
+.match-item.matched{border-color:var(--green);background:rgba(76,175,80,0.12);color:#a5d6a7;cursor:default;opacity:0.7}
+.match-item.wrong-flash{border-color:var(--red);background:rgba(239,83,80,0.15);animation:shake 0.35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.round-complete{background:rgba(76,175,80,0.12);border:1.5px solid var(--green);border-radius:12px;padding:18px 24px;margin-bottom:16px;display:none}
+.round-complete h3{font-size:20px;color:#a5d6a7;margin-bottom:8px}
+.round-complete p{color:var(--muted);font-size:14px}
+.quiz-nav{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:6px}
+.quiz-round-label{font-size:13px;color:var(--muted);margin-bottom:14px;letter-spacing:0.5px}
+@media(max-width:480px){.english{font-size:28px}.hangul{font-size:36px}.match-item{font-size:13px;padding:10px;min-height:48px}.match-grid{gap:8px 10px}.mem-btn{font-size:12px;padding:7px 12px}}
+</style>
+</head>
+<body>
+
+<!-- Top bar: Settings toggle + always-visible menus side by side -->
+<nav class="menubar">
+
+  <!-- Settings & Options toggle (controls Card Range Filter only) -->
+  <div class="menu-item" id="menuSettings">
+    <button class="menu-trigger" onclick="toggleSettings()">
+      📋 Card Filter <span class="menu-arrow" id="settingsArrow">▾</span>
+    </button>
+  </div>
+
+  <!-- Learning Options dropdown -->
+  <div class="menu-item" id="menuLearn">
+    <button class="menu-trigger" onclick="toggleMenu('menuLearn')">
+      📖 Learning Options <span class="menu-arrow">▾</span>
+    </button>
+    <div class="menu-dropdown">
+      <div class="menu-section-label">Card Mode</div>
+      <button class="menu-opt mode-opt active" id="btn1" onclick="setMode(1);closeMenus()">Ques → Answer</button>
+      <button class="menu-opt mode-opt" id="btn2" onclick="setMode(2);closeMenus()">Answer → Question</button>
+      
+      <div class="menu-divider"></div>
+      <div class="menu-section-label">Card Options</div>
+      <button class="menu-opt" onclick="shuffleCards();closeMenus()">🔀 Randomize</button>
+      <button class="menu-opt" id="contestBtn" onclick="toggleContest();closeMenus()">🎯 Match Contest</button>
+      <button class="menu-opt" id="drawBtn" onclick="toggleDraw();closeMenus()">✏️ Write Panel</button>
+      <button class="menu-opt srs-menu-opt" id="dueBtn" onclick="toggleDueFilter();closeMenus()">
+        📅 Due Today
+        <span id="dueBadge" style="display:none;background:rgba(239,83,80,0.25);color:#ef9a9a;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;border:1px solid #ef5350"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Memory Backup dropdown -->
+  <div class="menu-item" id="menuBackup">
+    <button class="menu-trigger" onclick="toggleMenu('menuBackup')">
+      💾 Memory Backup <span class="menu-arrow">▾</span>
+    </button>
+    <div class="menu-dropdown">
+      <button class="menu-opt export-opt" onclick="exportMemory();closeMenus()">⬇ Export to File</button>
+      <button class="menu-opt import-opt" onclick="document.getElementById('importFile').click();closeMenus()">⬆ Import from File</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importMemory(event)">
+      <div class="menu-divider"></div>
+      <button class="menu-opt danger-opt" onclick="clearAllMemory();closeMenus()">🗑 Clear All Memory Data</button>
+    </div>
+  </div>
+
+  <div class="menu-status-msg" id="backupInfo"></div>
+</nav>
+
+<!-- Collapsible Card Range Filter (toggled by Settings & Options) -->
+<div class="settings-panel-wrap" id="settingsPanelWrap">
+  <div class="panel">
+    <div class="panel-label">📋 Card Range Filter</div>
+    <div class="panel-row">
+      <div class="combo-wrapper"><select class="styled-select" id="categorySelect" onchange="loadCategory()"></select></div>
+      <div class="seg-field"><label for="startIdx">Start</label><input type="number" id="startIdx" class="seg-input" value="1" min="1"></div>
+      <div class="seg-field"><label for="endIdx">End</label><input type="number" id="endIdx" class="seg-input" value="13" min="1"></div>
+      <div class="seg-divider"></div>
+      <button class="btn primary" onclick="showRange()">Show Range</button>
+      <button class="btn" onclick="showAll()">Show All</button>
+    </div>
+  </div>
+</div>
+
+<div id="flashSection">
+  <div class="card-row">
+    <button class="nav-btn" onclick="prev()">&#8592;</button>
+    <div class="flip-card" id="card">
+      <div class="flip-card-inner">
+        <div class="flip-card-front">
+          <div class="card-mem-indicator" id="memIndicator" style="display:none"></div>
+          <div class="card-hint">tap to flip</div>
+          <div class="english" id="eng"></div>
+          <div class="srs-chip" id="srsChip" style="display:none"></div>
+        </div>
+        <div class="flip-card-back">
+          <div class="card-hint">tap to flip</div>
+          <div class="hangul" id="han"></div>
+          <div class="pron" id="pro"></div>
+        </div>
+      </div>
+    </div>
+    <button class="nav-btn" onclick="next()">&#8594;</button>
+  </div>
+  <div class="progress">Card <span id="current">1</span> of <span id="total">1</span></div>
+
+  <div class="panel" style="margin-top:16px;">
+    <div class="panel-label">🧠 Memory Status</div>
+    <div class="mem-btn-row">
+      <button class="mem-btn" data-level="0" onclick="markMemory(0)">0 Forgot <span class="mem-count" id="mc0">0</span></button>
+      <button class="mem-btn" data-level="1" onclick="markMemory(1)">1 Not So Easy <span class="mem-count" id="mc1">0</span></button>
+      <button class="mem-btn" data-level="2" onclick="markMemory(2)">2 Good <span class="mem-count" id="mc2">0</span></button>
+      <button class="mem-btn" data-level="3" onclick="markMemory(3)">3 Very Good <span class="mem-count" id="mc3">0</span></button>
+    </div>
+    <div class="mem-filter-row">
+      <div class="combo-wrapper" style="min-width:160px;max-width:260px;">
+        <select class="styled-select" id="memFilterSelect" onchange="applyMemFilter()">
+          <option value="">— View all cards —</option>
+          <option value="0">0 Forgotten</option>
+          <option value="1">1 Not So Easy</option>
+          <option value="2">2 Good</option>
+          <option value="3">3 Very Good</option>
+          <option value="unrated">Unrated</option>
+        </select>
+      </div>
+      <button class="btn" style="border-color:#ef5350;color:#ef9a9a;" onclick="resetMemStatus()">↺ Reset Mem. Status</button>
+    </div>
+  </div>
+  <div class="review-banner" id="reviewBanner">
+    Reviewing <span id="reviewLabel"></span> cards — <span id="reviewCount"></span> card(s)
+    &nbsp;·&nbsp;<a href="#" style="color:var(--gold);" onclick="clearMemFilter();return false;">Clear filter</a>
+  </div>
+</div>
+
+<!-- DRAW PANEL -->
+<div class="draw-panel" id="drawPanel">
+  <div class="panel-label">✏️ Write / Practice</div>
+  <div class="draw-toolbar">
+    <span class="tb-label">Color</span>
+    <div class="swatch active" style="background:#1a1a1a" data-color="#1a1a1a"></div>
+    <div class="swatch" style="background:#ef5350" data-color="#ef5350"></div>
+    <div class="swatch" style="background:#1565c0" data-color="#1565c0"></div>
+    <div class="swatch" style="background:#2e7d32" data-color="#2e7d32"></div>
+    <div class="swatch" style="background:#f57c00" data-color="#f57c00"></div>
+    <div class="swatch" style="background:#7b1fa2" data-color="#7b1fa2"></div>
+    <div class="swatch" style="background:#08AEC0;border:1px solid #bbb" data-color="#08AEC0"></div>
+    <div class="d-sep"></div>
+    <span class="tb-label">Size</span>
+    <div class="size-row">
+      <input type="range" id="sizeSlider" min="2" max="40" value="4" step="1" oninput="onSizeChange()">
+      <div class="dot-prev"><div class="dot" id="dotPreview" style="width:4px;height:4px"></div></div>
+    </div>
+    <div class="d-sep"></div>
+    <button class="tb-btn" id="eraseBtn" onclick="toggleErase()">Eraser</button>
+    <button class="tb-btn" onclick="undoDraw()">Undo</button>
+    <button class="tb-btn" onclick="clearCanvas()">Clear</button>
+  </div>
+  <canvas class="draw-canvas" id="drawCanvas" height="300"></canvas>
+</div>
+
+<!-- QUIZ -->
+<div id="quizSection">
+  <div class="quiz-score-bar">
+    <div class="score-item"><div class="score-dot correct"></div><span id="scoreCorrect">0</span> matched</div>
+    <div class="score-item"><div class="score-dot remain"></div><span id="scoreRemain">0</span> remaining</div>
+    <div class="score-item"><div class="score-dot wrong"></div><span id="scoreWrong">0</span> errors</div>
+  </div>
+  <div class="quiz-round-label" id="quizRoundLabel"></div>
+  <div class="round-complete" id="roundComplete"><h3>✅ Round Complete!</h3><p id="roundCompleteMsg"></p></div>
+  <div class="match-grid"><div class="match-col" id="colLeft"></div><div class="match-col" id="colRight"></div></div>
+  <div class="quiz-nav">
+    <button class="btn" id="prevRoundBtn" onclick="changeRound(-1)">← Prev Round</button>
+    <button class="btn primary" id="nextRoundBtn" onclick="changeRound(1)">Next Round →</button>
+    <button class="btn" onclick="restartQuiz()">🔄 Restart</button>
+  </div>
+</div>
+
+<script>
+
+
+	const allLists = {
+	"Cell Structure and Genetic Control \n - Cell Structure": [
+
+	{e:"What is the basic unit of structure and function in the body?",p:"The cell"},
+	{e:"What performs many of the functions of cells?",p:"Particular subcellular structures known as organelles"},
+	{e:"What does the plasma (cell) membrane allow?",p:"Selective communication between the intracellular and extracellular compartments, and aids cellular movement"},
+	{e:"What does complexity of function demand at the subcellular level?",p:"Complexity of structure"},
+	{e:"What characteristic do all cells share despite their diversity in shape and size?",p:"They are all surrounded by a plasma membrane"},
+
+	{e:"What are the three principal parts of a cell (for descriptive purposes)?",p:"Plasma (cell) membrane; cytoplasm and organelles; nucleus"},
+	{e:"What does the plasma membrane do for the cell?",p:"Surrounds the cell, gives it form, separates internal structures from the extracellular environment, and participates in intercellular communication"},
+	{e:"What is the cytoplasm?",p:"The aqueous content of a cell inside the plasma membrane but outside the nucleus"},
+	{e:"What are organelles (excluding the nucleus)?",p:"Subcellular structures within the cytoplasm that perform specific functions"},
+	{e:"What is cytosol?",p:"The fluid portion of the cytoplasm that cannot be removed by centrifugation"},
+	{e:"What is the nucleus?",p:"A large, generally spheroid body that is the largest organelle, contains the cell's DNA, and directs the cell's activities"},
+	{e:"What do nucleoli do?",p:"Serve as centers for the production of ribosomes"},
+	{e:"What are ribosomes?",p:"The sites of protein synthesis"},
+
+	{e:"Why must a barrier exist between the intracellular and extracellular compartments?",p:"To prevent the loss of enzymes, nucleotides, and other water-soluble cellular molecules, since both compartments are aqueous"},
+	{e:"What is this barrier composed of, and why not water-soluble molecules?",p:"Lipids, because a barrier separating two aqueous compartments cannot itself be water-soluble"},
+	{e:"What are the plasma membrane and organelle membranes primarily composed of?",p:"Phospholipids and proteins"},
+	{e:"What are the polar and nonpolar regions of a phospholipid?",p:"The phosphate-containing region is polar (hydrophilic); the rest of the molecule is nonpolar (hydrophobic)"},
+	{e:"Why do phospholipids form a bilayer in the cell membrane?",p:"The hydrophobic tails huddle together in the center away from water, while the polar heads face the aqueous surfaces on both sides"},
+	{e:"What does the hydrophobic middle of the membrane restrict?",p:"The passage of water and water-soluble molecules and ions"},
+	{e:"What are the specialized functions and selective transport properties of the membrane believed to be due to?",p:"Its protein content"},
+
+	{e:"What are the two types of membrane proteins based on position?",p:"Peripheral proteins and integral proteins"},
+	{e:"What is a peripheral protein?",p:"A protein only partially embedded in one face of the membrane"},
+	{e:"What is an integral protein?",p:"A protein that spans the membrane from one side to the other"},
+	{e:"Why are membrane proteins not uniformly distributed?",p:"Because the membrane is not solid—phospholipids and proteins are free to move laterally, creating a constantly changing mosaic pattern"},
+	{e:"What is this arrangement of membrane proteins and lipids called?",p:"The fluid-mosaic model of membrane structure"},
+	{e:"Why is the fluid-mosaic model considered somewhat misleading?",p:"Because proteins are localized by function and distributed patchily rather than uniformly, sometimes crowding together"},
+	{e:"Give an example of why patchy protein distribution can be important.",p:"When membrane proteins serve as receptors for neurotransmitters released at synapses"},
+
+	{e:"What functions do plasma membrane proteins serve?",p:"Structural support, transport of molecules across the membrane, and enzymatic control of chemical reactions at the cell surface"},
+	{e:"What do some membrane proteins function as?",p:"Receptors for hormones and other regulatory molecules arriving at the outer membrane surface"},
+	{e:"How specific are receptor proteins for their messengers?",p:"Usually specific for one particular messenger, similar to an enzyme specific for a single substrate"},
+	{e:"What do 'marker' proteins on the cell surface do?",p:"Act as antigens that identify the tissue type of an individual"},
+
+	{e:"Where are carbohydrates located on the plasma membrane and in what forms?",p:"Primarily attached to the outer surface as glycoproteins and glycolipids"},
+	{e:"What do certain glycolipids on red blood cell membranes determine?",p:"Blood type (they serve as antigens)"},
+	{e:"What effect do the negative charges of membrane carbohydrates have?",p:"They affect interaction of regulatory molecules with the membrane and affect interactions between cells (e.g., helping keep red blood cells apart)"},
+	{e:"What happens when carbohydrates are stripped from the outer red blood cell surface?",p:"The cells are destroyed more rapidly by the liver, spleen, and bone marrow"},
+
+	{e:"What are the two processes of bulk transport across the plasma membrane?",p:"Phagocytosis and endocytosis"},
+	{e:"Which cells perform amoeboid movement?",p:"Neutrophils (white blood cells) and macrophages (connective tissue cells)"},
+	{e:"What does 'macrophage' literally mean?",p:"'Big eater'"},
+	{e:"What are pseudopods?",p:"Extensions of cytoplasm ('false feet') that pull the cell through the extracellular matrix"},
+	{e:"What does amoeboid movement depend on?",p:"Bonding of integrin proteins spanning the plasma membrane with proteins in the extracellular matrix"},
+	{e:"What is phagocytosis?",p:"A type of cellular 'eating' in which cells use pseudopods to surround and engulf particles of organic matter (such as bacteria)"},
+	{e:"What two functions does phagocytosis serve?",p:"Protecting the body from invading microorganisms and removing extracellular debris"},
+	{e:"What happens after pseudopods surround and fuse around an ingested particle?",p:"The inner membrane pinches off from the plasma membrane, forming a food vacuole containing the particle"},
+	{e:"What happens to the food vacuole?",p:"It fuses with a lysosome, and the particle is digested by lysosomal enzymes"},
+	{e:"Which cells are primarily responsible for phagocytosis, and what immune roles does it play?",p:"Neutrophils and macrophages; it defends the body and promotes inflammation"},
+	{e:"What additional role does macrophage phagocytosis serve besides fighting pathogens?",p:"Removal of senescent (aged) cells and cells that die by apoptosis"},
+	{e:"What is apoptosis?",p:"Cell suicide; a normal, ongoing activity in the body that is not accompanied by inflammation"},
+	{e:"What 'eat me' signal do phagocytes recognize on dying cells?",p:"Primarily phosphatidylserine on the plasma membrane surface"},
+
+	{e:"What is endocytosis?",p:"A process in which the plasma membrane furrows inward (invaginates) instead of extending outward with pseudopods"},
+	{e:"What is pinocytosis?",p:"A nonspecific form of endocytosis in which the membrane invaginates into a deep, narrow furrow that fuses and pinches off as a vesicle containing extracellular fluid"},
+	{e:"What can pinocytosis allow a cell to engulf?",p:"Large molecules such as proteins and other molecules present in the extracellular fluid"},
+	{e:"What is receptor-mediated endocytosis?",p:"A form of endocytosis that occurs only in response to specific extracellular molecules binding to specific receptor proteins in the plasma membrane"},
+	{e:"What happens during receptor-mediated endocytosis?",p:"Binding of specific molecules to membrane receptors causes the membrane to invaginate, fuse, and pinch off to form a vesicle containing extracellular fluid and molecules"},
+	{e:"Give an example of a substance taken up by receptor-mediated endocytosis and its medical relevance.",p:"Cholesterol attached to specific proteins is taken up into artery cells, contributing to atherosclerosis"},
+	{e:"Which viruses exploit receptor-mediated endocytosis to invade cells?",p:"Hepatitis, polio, and AIDS viruses"},
+
+	{e:"What is exocytosis?",p:"A process by which cellular products are secreted into the extracellular environment"},
+	{e:"What organelle packages proteins and other molecules destined for secretion into vesicles?",p:"The Golgi complex"},
+	{e:"What happens during exocytosis?",p:"Secretory vesicles fuse with the plasma membrane and release their contents into the extracellular environment"},
+	{e:"Give an example of cells that use exocytosis.",p:"Nerve endings, which release chemical neurotransmitters this way"},
+	{e:"What effect does vesicle fusion during exocytosis have on the plasma membrane?",p:"It increases the total surface area of the plasma membrane, replacing membrane lost during endocytosis"},
+
+	{e:"What are cilia?",p:"Tiny hairlike structures that project from the surface of a cell into the extracellular fluid"},
+	{e:"What can motile cilia do?",p:"Beat like rowers in a boat, stroking in unison"},
+	{e:"Where are motile cilia found in the human body?",p:"Projecting from the apical surface of stationary epithelial cells lining certain hollow organs, such as the respiratory system and female reproductive tract"},
+	{e:"What do cilia do in the respiratory airways?",p:"Transport strands of mucus to the pharynx, where it can be swallowed or expectorated"},
+	{e:"What do cilia do in the female reproductive tract?",p:"Beating of cilia on the uterine tube lining draws the ovum into the tube and moves it toward the uterus"},
+	{e:"What is a primary cilium?",p:"A single, nonmotile cilium found on almost every cell in the body, believed to serve sensory functions"},
+	{e:"Give two examples of primary cilium sensory function.",p:"Forming part of the photoreceptors in the retina, and detecting fluid movement in kidney tubules"},
+	{e:"What are cilia composed of?",p:"Microtubules (thin cylinders formed from proteins), surrounded by a specialized part of the plasma membrane"},
+	{e:"What is the microtubule arrangement in motile cilia?",p:"9 pairs of microtubules around the circumference plus a central pair, described as '9 + 2'"},
+	{e:"What is the microtubule arrangement in the primary cilium?",p:"'9 + 0'—lacks the central pair of microtubules"},
+	{e:"Which cells in the body have flagella, and what is the flagellum's function?",p:"Sperm cells; the flagellum is a single, whiplike structure that propels the sperm"},
+	{e:"What is the microtubule arrangement of a flagellum?",p:"'9 + 2', like motile cilia"},
+
+	{e:"What are microvilli?",p:"Numerous folds of the cell membrane that increase surface area in regions specialized for rapid diffusion"},
+	{e:"Where are microvilli found and why?",p:"On apical membranes of intestinal epithelial cells (to aid absorption of digestion products) and in kidney tubule epithelium (to aid reabsorption of filtered molecules)"},
+
+	],
+  "CytoPlasm and CytoSkeleton": [
+    {e:"What are lysosomes?",p:"Organelles that contain digestive enzymes"},
+{e:"What are mitochondria?",p:"Organelles where most cellular energy is produced"},
+{e:"What is cytoplasm?",p:"The material within a cell, exclusive of that within the nucleus"},
+{e:"What two components make up cytoplasm?",p:"Organelles (visible under the microscope) and the fluidlike cytosol that surrounds them"},
+
+{e:"Is the cytosol a homogeneous solution?",p:"No, it is a highly organized structure with protein fibers arranged in a complex latticework surrounding membrane-bound organelles"},
+{e:"What two types of protein fibers form this latticework?",p:"Microtubules and microfilaments"},
+{e:"How can microtubules and microfilaments be visualized?",p:"Using fluorescence microscopy with antibodies against their protein components"},
+{e:"What is the believed function of interconnected microfilaments and microtubules?",p:"To provide structural organization for cytoplasmic enzymes and support for various organelles"},
+{e:"What is this latticework of microfilaments and microtubules called?",p:"The cytoskeleton"},
+{e:"Is the cytoskeleton rigid?",p:"No, it is capable of quite rapid movement and reorganization"},
+{e:"What contractile proteins are associated with the cytoskeleton in most cells?",p:"Actin and myosin, which are also responsible for muscle contraction"},
+{e:"What role does the cytoskeleton play besides structure?",p:"It aids amoeboid movement, acting as the cell's 'musculature'"},
+{e:"What structure do microtubules form during cell division?",p:"The spindle apparatus, which pulls chromosomes away from each other"},
+{e:"What other structures do microtubules form?",p:"The central parts of cilia and flagella"},
+
+{e:"What system does the cytoskeleton form for transporting cargo in a cell?",p:"An amazingly complex 'railway' system on which organelles, vesicles, and large molecules travel to specific destinations"},
+{e:"What are the molecular motor proteins that move cargo along the cytoskeleton?",p:"Myosin (along actin filaments) and kinesins and dyneins (along microtubules)"},
+{e:"How do molecular motors attach to and move cargo?",p:"One end attaches to the cargo while the other end moves along the microfilament or microtubule"},
+{e:"Give an example of kinesin and dynein transport in a neuron.",p:"Kinesin moves vesicles in an axon toward its terminal, while dynein transports other vesicles in the opposite direction along the microtubule"},
+
+{e:"What are inclusions?",p:"Aggregates of stored chemicals in the cytoplasm of some cells"},
+{e:"Give three examples of cellular inclusions.",p:"Glycogen granules (liver, striated muscle), melanin granules (melanocytes of skin), and triglycerides (adipose cells)"},
+
+{e:"Why must ingested food molecules be digested before entering the cytoplasm?",p:"Because large molecules of proteins, polysaccharides, and lipids must be broken into smaller subunits (amino acids, monosaccharides, fatty acids) to cross the vacuole membrane"},
+{e:"Where are a cell's digestive enzymes isolated and concentrated?",p:"Within membrane-bound organelles called lysosomes"},
+{e:"How many different enzymes do lysosomes contain?",p:"More than 60 different enzymes"},
+{e:"What is a primary lysosome?",p:"A lysosome containing only digestive enzymes (about 40 different types) in an environment more acidic than the surrounding cytoplasm"},
+{e:"What is formed when a primary lysosome fuses with a food vacuole or other organelle?",p:"A secondary lysosome"},
+{e:"What does a secondary lysosome contain?",p:"Partially digested remnants of other organelles and ingested organic material"},
+{e:"What is a residual body?",p:"A lysosome that contains undigested wastes"},
+{e:"How do residual bodies eliminate waste?",p:"By exocytosis, or the wastes may accumulate within the cell as it ages"},
+{e:"What is autophagy?",p:"A process that destroys worn-out organelles so they can be continuously replaced, seen as partly digested organelle debris in secondary lysosomes"},
+{e:"Why are lysosomes called the cell's 'digestive system'?",p:"Because they digest ingested material and worn-out organelles"},
+{e:"Why have lysosomes been called 'suicide bags'?",p:"Because a break in their membranes would release digestive enzymes and destroy the cell"},
+{e:"When does lysosomal membrane rupture happen normally?",p:"In programmed cell death (apoptosis)"},
+{e:"Give an example of apoptosis during embryonic development.",p:"The loss of tissues such as gill pouches, which are remodeled or replaced as the embryo matures"},
+
+{e:"What are peroxisomes?",p:"Membrane-enclosed organelles containing enzymes that promote oxidative reactions"},
+{e:"In which cell type are peroxisomes particularly large and active?",p:"Liver cells"},
+{e:"What reaction do peroxisome enzymes catalyze?",p:"Removal of hydrogen from organic molecules and transfer to molecular oxygen (O2), oxidizing the molecule and forming hydrogen peroxide (H2O2)"},
+{e:"What is an important function of peroxisomes in liver and kidney cells?",p:"Oxidation of toxic molecules"},
+{e:"Give an example of peroxisome detoxification.",p:"Liver peroxisomes oxidize much of the alcohol from alcoholic drinks into acetaldehyde"},
+{e:"What enzyme prevents excessive accumulation of hydrogen peroxide in peroxisomes?",p:"Catalase, which catalyzes 2H2O2 → 2H2O + O2"},
+{e:"What is notable about catalase's reaction speed?",p:"It is one of the fastest-acting enzymes known"},
+{e:"What everyday phenomenon is caused by catalase?",p:"The fizzing that occurs when hydrogen peroxide is poured on a wound"},
+
+{e:"Which cells lack mitochondria?",p:"Mature red blood cells"},
+{e:"How many mitochondria does a typical cell have?",p:"From a hundred to a few thousand"},
+{e:"What is the main function of mitochondria?",p:"Serving as sites for the production of most of the cell's energy"},
+{e:"What is the basic membrane structure of a mitochondrion?",p:"An inner and outer membrane, separated by a narrow intermembranous space"},
+{e:"What distinguishes the outer and inner mitochondrial membranes?",p:"The outer membrane is smooth; the inner membrane has many folds called cristae"},
+{e:"What are cristae?",p:"Folds of the inner mitochondrial membrane that project like shelves into the central matrix"},
+{e:"What is the matrix of a mitochondrion?",p:"The central area compartmentalized by the cristae, involved in generating cellular energy"},
+{e:"What unique capabilities do mitochondria have?",p:"They can migrate through the cytoplasm and are able to reproduce themselves"},
+{e:"What is unique about mitochondrial DNA?",p:"It is a more primitive form of DNA than nuclear DNA, consisting of a circular, relatively small, double-stranded molecule"},
+{e:"What evolutionary theory explains mitochondrial DNA?",p:"Mitochondria are believed to have evolved from separate bacteria-related organisms that invaded ancestral animal cells and remained in symbiosis"},
+{e:"How might mitochondria harm their host cell?",p:"They produce superoxide radicals that can cause oxidative stress"},
+{e:"What is one hypothesis linking mitochondria to aging?",p:"Accumulated mutations in mitochondrial DNA may contribute to aging, supported by mice with accelerated mitochondrial DNA mutations aging prematurely"},
+
+{e:"Why are ribosomes called 'protein factories' of the cell?",p:"Because proteins are produced there according to genetic information in messenger RNA"},
+{e:"How large are ribosomes?",p:"About 25 nanometers"},
+{e:"Where are ribosomes found in the cell?",p:"Free in the cytoplasm or on the surface of the endoplasmic reticulum"},
+{e:"What are the two subunits of a ribosome called?",p:"30S and 50S, named after their sedimentation rate in a centrifuge (Svedberg units)"},
+{e:"What is each ribosomal subunit composed of?",p:"Ribosomal RNA and proteins"},
+{e:"What surprising role does ribosomal RNA play?",p:"It serves as enzymes, called ribozymes, for many reactions required in protein synthesis"},
+
+{e:"What is the endoplasmic reticulum (ER)?",p:"A system of membranes found in most cells"},
+{e:"What are the two types of endoplasmic reticulum?",p:"Granular (rough) ER and agranular (smooth) ER"},
+{e:"What distinguishes granular from agranular ER?",p:"Granular ER bears ribosomes on its surface; agranular ER does not"},
+{e:"What functions does the agranular (smooth) ER serve?",p:"Site for enzyme reactions in steroid hormone production/inactivation, and storage of Ca2+ in striated muscle cells"},
+{e:"Where is the granular (rough) ER abundant?",p:"In cells active in protein synthesis and secretion, such as many exocrine and endocrine gland cells"},
+{e:"What does agranular ER in liver cells do (clinical application)?",p:"Contains enzymes that inactivate steroid hormones and many drugs by converting them to more water-soluble, less active, more easily excreted forms"},
+{e:"What is drug tolerance, and how is it related to agranular ER?",p:"A phenomenon where increasingly larger drug doses are needed for the same effect, accompanied by growth of the agranular ER and increased drug-inactivating enzymes"},
+{e:"Give two examples of drugs associated with tolerance and agranular ER growth.",p:"Alcohol and phenobarbital"},
+
+{e:"What is the Golgi complex (Golgi apparatus)?",p:"A stack of several flattened, hollow sacs called cisternae, resembling a stack of pancakes"},
+{e:"What faces the endoplasmic reticulum in the Golgi complex, and what is its role?",p:"One side of the stack, which serves as the entry site for vesicles from the ER containing cellular products"},
+{e:"What faces the plasma membrane in the Golgi complex?",p:"The other side of the stack, to which cellular products are eventually transferred"},
+{e:"What are the two proposed mechanisms for product movement through the Golgi complex?",p:"Products pass from sac to sac (probably in vesicles) toward the plasma-membrane-facing side, or the receiving sac itself moves through the stack"},
+{e:"What happens to cell products as they move through the Golgi complex?",p:"They become chemically modified"},
+{e:"What happens to cell products once they reach the sac facing the plasma membrane?",p:"They are packaged into vesicles that bud off the sac"},
+{e:"What can the vesicles that leave the Golgi complex become?",p:"Lysosomes, secretory vesicles (releasing product via exocytosis), or serve other functions"},
+ 
+  ],
+
+  "Cell Nucleus and Gene Expression":[
+    {e:"What organelle contains the DNA of a cell?",p:"The nucleus"},
+{e:"What is a gene?",p:"A length of DNA that codes for the production of a specific polypeptide chain"},
+{e:"What must happen before genes can be expressed?",p:"They must direct the production of complementary RNA molecules"},
+{e:"What is this process called?",p:"Genetic transcription"},
+
+{e:"How many nuclei do most cells have?",p:"A single nucleus"},
+{e:"Which cells are exceptions to having a single nucleus?",p:"Skeletal muscle cells (many nuclei) and mature red blood cells (none)"},
+{e:"What encloses the nucleus?",p:"Two membranes—an inner and outer membrane—together called the nuclear envelope"},
+{e:"What is the outer nuclear membrane continuous with?",p:"The endoplasmic reticulum in the cytoplasm"},
+{e:"What fuses the inner and outer nuclear membranes together at various points?",p:"Nuclear pore complexes"},
+{e:"What is the function of nuclear pore complexes?",p:"They act as rivets holding the two membranes together"},
+{e:"What does each nuclear pore complex consist of?",p:"A central opening (the nuclear pore) surrounded by interconnected rings and columns of proteins"},
+{e:"How do small molecules move through nuclear pore complexes?",p:"By diffusion"},
+{e:"How do proteins and RNA move through nuclear pores?",p:"Through a selective, energy-requiring process using transport proteins to ferry cargo"},
+{e:"What is one function of transporting specific proteins from the cytoplasm into the nucleus?",p:"Regulation of gene expression by hormones"},
+{e:"Why must RNA be transported out of the nucleus?",p:"Because it is required for gene expression"},
+{e:"What does each gene code for?",p:"A particular type of RNA called messenger RNA (mRNA)"},
+{e:"What happens to mRNA as it passes through the nuclear pore?",p:"It becomes associated with ribosomes, either free in the cytoplasm or on the granular endoplasmic reticulum"},
+{e:"What does mRNA provide the code for?",p:"The production of a specific type of protein"},
+
+{e:"What determines the primary structure (amino acid sequence) of a protein?",p:"The sequence of bases in mRNA"},
+{e:"What determines the base sequence of mRNA?",p:"The sequence of bases in the region of DNA (the gene) that codes for the mRNA"},
+{e:"What are the two stages of genetic expression?",p:"Genetic transcription (RNA synthesis) followed by genetic translation (protein synthesis)"},
+{e:"What are nucleoli?",p:"Dark areas in the nucleus, not surrounded by membranes, containing DNA that codes for ribosomal RNA (rRNA)"},
+
+{e:"When did the Human Genome Project begin, and what was its goal?",p:"1990; an international effort to sequence the human genome"},
+{e:"What happened in February 2001 regarding the Human Genome Project?",p:"Two versions of the sequenced genome were published—one in Science (public agencies) and one in Nature (a private company)"},
+{e:"How similar is human DNA among people?",p:"99.9% similar; only 0.1% accounts for human genetic variation"},
+{e:"About how many genes do humans have, according to the Human Genome Project?",p:"About 25,000, rather than the previously believed 100,000"},
+
+{e:"What does the term genome refer to?",p:"All of the genes in a particular individual or species"},
+{e:"What was previously believed about the relationship between genes and proteins?",p:"That one gene coded for one protein (or at least one polypeptide chain)"},
+{e:"How many different proteins does each cell produce, compared to the number of genes?",p:"Well over 100,000 different proteins, far exceeding the ~25,000 genes"},
+{e:"What is the proteome?",p:"All of the proteins produced by the genome"},
+{e:"Why is the concept of the proteome complicated?",p:"Because in a given cell some portion of the genome is inactive, and different cell types and times produce different proteins"},
+{e:"What causes different cells to produce different proteins over time?",p:"Signaling by hormones and other regulators"},
+
+{e:"What are three proposed mechanisms by which one gene can produce more than one protein?",p:"(1) alternative cutting and splicing of RNA, (2) association of a polypeptide chain with different chains to form different proteins, (3) attachment of carbohydrates or lipids that alter protein function"},
+{e:"What are posttranslational modifications?",p:"Chemical changes made to proteins after they are formed, such as methylation, phosphorylation, and cleavage of larger polypeptides into smaller ones with different actions"},
+{e:"On average, how many posttranslational modifications does a protein have?",p:"At least two or three"},
+{e:"What besides composition determines a protein's function?",p:"Its three-dimensional (tertiary) structure and how it interacts with other proteins"},
+
+{e:"What four nucleotide bases make up DNA?",p:"Adenine, guanine, cytosine, and thymine"},
+{e:"What structure do the two DNA polynucleotide chains form?",p:"A double helix, joined by complementary base pairing"},
+{e:"What is chromatin?",p:"The threadlike material making up chromosomes, formed by DNA combined with protein"},
+{e:"What type of protein makes up much of chromatin?",p:"Histones"},
+{e:"What is the charge relationship between histones and DNA?",p:"Histone proteins are positively charged and DNA strands wound around them are negatively charged"},
+{e:"What is a nucleosome?",p:"A particle formed by DNA (two turns, 146 base pairs) spooled around a core of histone proteins"},
+{e:"What is euchromatin?",p:"Chromatin in a relatively extended form that is active in genetic transcription"},
+{e:"What is heterochromatin?",p:"Highly condensed chromatin forming blotchy areas in the nucleus, containing permanently inactivated genes"},
+{e:"How are genes in euchromatin activated or repressed?",p:"Through chemical changes in the histones"},
+{e:"What is histone acetylation, and what does it do?",p:"Addition of two-carbon-long chemical groups to histones, which turns on genetic transcription"},
+{e:"What is histone deacetylation, and what does it do?",p:"Removal of acetyl groups from histones, which stops gene transcription"},
+{e:"What effect does histone acetylation have on chromatin structure?",p:"It produces a less condensed, more open configuration, allowing DNA to be read by transcription factors"},
+
+{e:"How many genes out of ~25,000 are active in a given cell?",p:"About 300"},
+{e:"What is differentiation?",p:"The process by which each cell becomes specialized for particular functions"},
+{e:"What are embryonic stem cells, and what does 'pluripotent' mean?",p:"Cells that can become any cell in the body; pluripotent means having this capacity"},
+{e:"What happens to genes as development proceeds?",p:"Most genes are silenced as cells become more differentiated"},
+{e:"What are adult stem cells?",p:"Cells that can differentiate into a range of specific cell types but are not normally pluripotent"},
+{e:"What are hematopoietic stem cells?",p:"Bone marrow stem cells that can form blood cells"},
+{e:"What are mesenchymal stem cells, and what can they become?",p:"Bone marrow stem cells that can differentiate into osteocytes, chondrocytes, adipocytes, and others"},
+{e:"What are neural stem cells?",p:"Stem cells identified in the adult nervous system that migrate and differentiate into specific neuron and glial cell types"},
+
+{e:"How long is each gene (in nucleotide pairs)?",p:"Several thousand nucleotide pairs long"},
+{e:"How many base pairs does human DNA contain, and how many proteins could it theoretically code for?",p:"Over 3 billion base pairs, enough to code for at least 3 million proteins"},
+{e:"How many proteins does the average human cell actually contain?",p:"30,000 to 150,000 different proteins"},
+{e:"What does it mean that only a fraction of DNA codes for proteins?",p:"Some DNA is inactive or redundant, and some regulates protein-coding regions"},
+{e:"What must happen before the genetic code can be translated into protein synthesis?",p:"The DNA code must first be copied onto a strand of RNA (genetic transcription)"},
+{e:"What enzyme carries out RNA synthesis?",p:"RNA polymerase, which breaks the weak hydrogen bonds between paired DNA bases"},
+{e:"Where does RNA polymerase act along the DNA?",p:"Only in the regions to be transcribed, marked by 'start' and 'stop' base sequences"},
+{e:"What are promoters?",p:"Regions of DNA that regulatory molecules (transcription factors) bind to in order to activate a gene"},
+{e:"What is an example of a transcription factor?",p:"Hormones, which bind to the promoter region of a gene"},
+{e:"What base pairing rule governs RNA synthesis?",p:"Guanine bonds with cytosine, and adenine bonds with uracil (uracil replaces thymine in RNA)"},
+{e:"How does RNA synthesis differ from DNA replication in terms of strands used?",p:"Only one of the two freed DNA strands serves as a guide for RNA synthesis"},
+{e:"What happens to an RNA molecule once it is produced?",p:"It detaches from the DNA strand on which it was formed"},
+{e:"What happens when a gene is no longer being transcribed?",p:"The separated DNA strands go back together again"},
+
+{e:"What are the four types of RNA produced by transcription?",p:"Precursor messenger RNA (pre-mRNA), messenger RNA (mRNA), transfer RNA (tRNA), and ribosomal RNA (rRNA)"},
+{e:"What is pre-mRNA?",p:"RNA that is altered within the nucleus to form mRNA"},
+{e:"What does mRNA do?",p:"Contains the code for synthesis of specific proteins"},
+{e:"What does tRNA do?",p:"Needed for decoding the genetic message contained in mRNA"},
+{e:"What does rRNA do?",p:"Forms part of the structure of ribosomes"},
+{e:"Where is the DNA that codes for rRNA located?",p:"In the nucleolus"},
+{e:"How does gene expression in bacteria differ from that in humans?",p:"In bacteria, mRNA directs protein synthesis as soon as it's transcribed; in humans, pre-mRNA must first be modified in the nucleus before becoming mRNA"},
+
+{e:"Why is pre-mRNA much larger than the mRNA it forms?",p:"Because excess, noncoding bases are located within the pre-mRNA, not just at the ends"},
+{e:"What are introns?",p:"Noncoding regions of DNA (and pre-mRNA) within a gene"},
+{e:"What are exons?",p:"The coding regions within a gene"},
+{e:"Why must pre-mRNA be cut and spliced?",p:"To remove introns and join exons together to form functional mRNA"},
+{e:"How many different proteins does an individual gene code for on average?",p:"About three"},
+{e:"What process allows one gene to produce multiple proteins?",p:"Alternative splicing of exons"},
+{e:"How many exons does the average human gene contain, and what is a notable exception?",p:"About eight; the gene for the protein titin contains 234 exons"},
+{e:"What percentage of genes involved in cell signaling and regulation display alternative splicing?",p:"About 75%"},
+{e:"What are snRNPs (snurps)?",p:"Small nuclear ribonucleoproteins—small, ribosome-like aggregates of RNA and protein that cut introns and splice exons together"},
+{e:"What structure do snRNPs form to splice exons?",p:"A spliceosome"},
+{e:"What percentage of DNA codes for proteins?",p:"Less than 2%"},
+{e:"What function might non-protein-coding RNA (from introns and other DNA) serve?",p:"Important regulatory functions, such as helping regulate expression of protein-coding regions"},
+
+{e:"What was the 2006 Nobel Prize in Physiology or Medicine awarded for?",p:"The discovery of RNA interference (RNAi)"},
+{e:"What is RNA interference?",p:"A regulatory process in which certain non-coding RNA molecules prevent specific mRNA molecules from being translated"},
+{e:"What are the two types of RNA that mediate RNA interference?",p:"Short interfering RNA (siRNA) and microRNA (miRNA)"},
+{e:"How is siRNA formed?",p:"Double-stranded RNA leaves the nucleus, enters the cytoplasm, and is processed into short RNA molecules (21–28 nucleotides long)"},
+{e:"How is miRNA formed?",p:"Short (~21 nucleotide) single-stranded RNA forms a hairpin loop by imperfect base pairing and is processed into miRNA"},
+{e:"What protein particle do siRNA and miRNA enter?",p:"The RNA-induced silencing complex (RISC)"},
+{e:"What happens within the RISC?",p:"siRNA or miRNA are converted to single-stranded form to base-pair with complementary target mRNA molecules"},
+{e:"What happens when siRNA is perfectly complementary to an mRNA?",p:"The RISC destroys the mRNA, preventing its translation, silencing that specific mRNA"},
+{e:"How does miRNA typically act, if not perfectly complementary?",p:"It prevents the mRNA from being translated into protein without destroying it"},
+{e:"How many mRNA molecules can a single miRNA silence?",p:"As many as an estimated 200 different mRNA molecules"},
+{e:"How does miRNA production in tumor cells compare to normal cells?",p:"Tumor cells produce fewer miRNA molecules than normal cells"},
+{e:"What potential diagnostic use is suggested for miRNA patterns?",p:"Patterns of miRNA types produced by tumors are characteristic of tumor type, which may aid diagnosis"},
+{e:"What potential future medical application is suggested for RNA interference?",p:"Delivering siRNA or miRNA as drugs to suppress expression of abnormal genes or genes of infectious viruses"},
+
+  ],
+
+  "Protein Synthesis and Secretion":
+  [
+    {e:"What is the first step for a gene to be expressed?",p:"It must be used as a template to produce a complementary strand of messenger RNA"},
+{e:"What determines the sequence of amino acids in a protein?",p:"The sequence of base triplets (codons) in the mRNA"},
+
+{e:"What happens when mRNA enters the cytoplasm?",p:"It attaches to ribosomes"},
+{e:"What is a ribosome composed of?",p:"4 molecules of ribosomal RNA and 82 proteins, arranged into two subunits of unequal size"},
+{e:"What structure is formed when mRNA passes through multiple ribosomes?",p:"A 'string-of-pearls' structure called a polyribosome (polysome)"},
+{e:"What is genetic translation?",p:"The production of specific proteins according to the code contained in the mRNA base sequence"},
+{e:"What is a codon?",p:"A base triplet (three bases) that codes for a specific amino acid"},
+{e:"How does mRNA determine the amino acid sequence of a polypeptide?",p:"As mRNA moves through the ribosome, its sequence of codons is translated into a sequence of specific amino acids"},
+
+{e:"What is Huntington's disease?",p:"A progressive, genetic neurological disease causing crippling physical and psychological conditions, inherited as a dominant trait on chromosome 4"},
+{e:"What is the genetic defect that causes Huntington's disease?",p:"A 'stutter' in the huntingtin gene where the base triplet CAG is repeated from 40 to as many as 250 times"},
+{e:"What effect does the CAG repeat have on the protein product?",p:"It causes the amino acid glutamine (coded by CAG) to be repeated, producing a defective protein that causes neural degeneration"},
+{e:"What is fragile X syndrome, and what causes it?",p:"The most common genetic cause of mental retardation, caused by 200 or more repeats of CGG in the FMR1 gene"},
+
+{e:"What accomplishes translation of codons?",p:"tRNA and particular enzymes"},
+{e:"What is the structure of tRNA?",p:"Single-stranded, but bent into a cloverleaf structure that is further twisted into an upside-down 'L' shape"},
+{e:"What is an anticodon?",p:"Three nucleotides at one end of tRNA that are complementary to a specific codon in mRNA"},
+{e:"What enzymes join specific amino acids to tRNA?",p:"Aminoacyl-tRNA synthetase enzymes"},
+{e:"How many types of synthetase enzymes are there?",p:"20 different varieties, one for each type of amino acid"},
+{e:"What must each synthetase enzyme be able to do?",p:"Recognize its specific amino acid and attach it to the tRNA with the correct anticodon for that amino acid"},
+
+{e:"How does a polypeptide form during translation?",p:"tRNA anticodons bind to mRNA codons as mRNA moves through the ribosome, and the amino acids carried by tRNA are joined by peptide bonds in the order specified by the codons"},
+{e:"What happens between the first and second tRNA during polypeptide formation?",p:"They bring the first and second amino acids close together, and the first amino acid detaches and is transferred to the second, forming a dipeptide"},
+{e:"How does the polypeptide chain continue to grow?",p:"New amino acids are added to the growing tip as successive tRNAs bind their codons and transfer their amino acids"},
+{e:"How many tRNA molecules are attached to the growing polypeptide chain at any time?",p:"Only one—the tRNA that added the most recent amino acid"},
+{e:"What happens to the polypeptide chain's structure as it grows?",p:"Interactions between amino acids cause it to twist into a helix (secondary structure) and fold upon itself (tertiary structure)"},
+{e:"What happens at the end of polypeptide synthesis?",p:"The new protein detaches from the tRNA as the last amino acid is added"},
+{e:"What problems can occur during protein folding?",p:"Regions of the polypeptide may improperly interact with each other, or similar proteins nearby may aggregate to form toxic complexes"},
+{e:"What proteins help prevent improper folding?",p:"Chaperones, which help the polypeptide chain fold into its correct tertiary structure as it emerges from the ribosome"},
+{e:"Where do further protein modifications occur after synthesis?",p:"In the rough endoplasmic reticulum and Golgi complex"},
+
+{e:"Where are proteins for use within the cell produced?",p:"By polyribosomes floating freely in the cytoplasm, unattached to other organelles"},
+{e:"Where are proteins destined for secretion produced?",p:"By mRNA-ribosome complexes located on the granular endoplasmic reticulum"},
+{e:"What are cisternae?",p:"Fluid-filled spaces enclosed by the membranes of the endoplasmic reticulum, into which newly formed secretory proteins enter"},
+{e:"What characterizes the leader sequence of a secretory protein?",p:"The first ~30 amino acids, which are primarily hydrophobic"},
+{e:"What is the function of the leader sequence?",p:"It is attracted to the lipid component of ER membranes and acts as an 'address' directing the protein into the endoplasmic reticulum as it is injected into the cisterna"},
+{e:"What happens to the leader sequence once the protein is in the cisterna?",p:"It is enzymatically removed so the protein cannot reenter the cytoplasm"},
+
+{e:"What is preproinsulin?",p:"The original insulin molecule, a single polypeptide of 109 amino acids, that enters the ER cisterna"},
+{e:"What is the leader sequence of preproinsulin, and what happens to it?",p:"The first 23 amino acids, which allow injection into the cisterna and are then quickly removed to form proinsulin"},
+{e:"What happens to proinsulin within the cisterna?",p:"The chain folds so the first and last amino acids come close together; enzymatic removal of the central region produces two chains (21 and 30 amino acids) joined by disulfide bonds"},
+{e:"What is the final secreted form of insulin?",p:"Two polypeptide chains (21 and 30 amino acids long) joined by disulfide bonds"},
+
+{e:"Where do secretory proteins go after the granular endoplasmic reticulum?",p:"To the Golgi complex"},
+{e:"What are the three functions of the Golgi complex?",p:"Further modification of proteins (e.g., adding carbohydrates to form glycoproteins), separation of proteins by function/destination, and packaging/shipping of final products in vesicles"},
+{e:"How does the Golgi complex sort proteins with different destinations?",p:"It separates proteins destined for secretion, incorporation into the cell membrane, or introduction into lysosomes, packaging each into different vesicles"},
+
+{e:"What are some regulatory functions of proteins within a cell?",p:"Many are enzymes that increase reaction rates (including gene activation/inactivation); others modify enzyme activity"},
+{e:"What are cyclins?",p:"Regulatory proteins that help control the cell cycle"},
+{e:"Why must regulatory proteins be rapidly degraded?",p:"To quickly end their effects so other proteins can produce new actions, allowing tighter regulatory control than regulating synthesis alone"},
+{e:"Where are many cellular proteins digested?",p:"In the lysosomes, by protease enzymes"},
+{e:"How are critical regulatory proteins degraded outside lysosomes?",p:"Through a process that requires cellular energy (ATP)"},
+{e:"What is ubiquitin?",p:"A short polypeptide of 76 amino acids that tags regulatory proteins for degradation"},
+{e:"What does ubiquitin tagging enable?",p:"Degradation of the protein by the proteasome, a large protease enzyme complex"},
+{e:"What is the proteasome?",p:"A large protease enzyme complex that degrades ubiquitin-tagged proteins"},
+{e:"Give an example of regulated protein degradation via ubiquitin/proteasome.",p:"The stepwise progression through the cell cycle requires stepwise degradation of particular cyclin proteins"},
+  ],
+
+  "DNA Synthesis and Cell Division":
+  [
+      {e:"What acts as a template when a cell is going to divide?",p:"Each strand of DNA within its nucleus"},
+{e:"What is mitosis?",p:"A type of cell division by which organs grow and repair themselves, producing two daughter cells with the same genetic information as the parent cell"},
+{e:"What is meiosis?",p:"A type of cell division that produces gametes containing only half the number of chromosomes as the parent cell"},
+{e:"What is the only molecule in the body capable of replicating itself?",p:"DNA"},
+
+{e:"What enzymes break the hydrogen bonds between DNA base pairs during replication?",p:"DNA helicases"},
+{e:"What does DNA helicase action produce?",p:"Two free strands at a fork in the double-stranded DNA molecule"},
+{e:"According to complementary base pairing, what pairs with what during DNA replication?",p:"Adenine pairs with thymine-containing nucleotides; guanine pairs with cytosine-containing nucleotides"},
+{e:"What enzyme joins nucleotides to form a new complementary polynucleotide chain?",p:"DNA polymerase"},
+{e:"What is produced at the end of DNA replication?",p:"Two new double-helix DNA molecules, each with the same base sequence as the parent molecule"},
+{e:"Why is DNA replication called semiconservative?",p:"Because each new DNA molecule is composed of one new strand and one strand from the original DNA molecule"},
+
+{e:"How can the life of a cell be described, compared to that of an organism?",p:"Cyclical, rather than a linear progression from birth to death"},
+{e:"How often is the epidermis of the skin renewed?",p:"Approximately every two weeks"},
+{e:"How often is the stomach lining renewed?",p:"Every two or three days"},
+{e:"Which cells in the adult body do not divide at all?",p:"Striated muscle cells"},
+{e:"What is interphase?",p:"The part of a cell's life cycle when it is not dividing, subdivided into G1, S, and G2 phases"},
+{e:"What occurs to chromosomes and genes during interphase?",p:"Chromosomes are in their extended form and genes actively direct RNA synthesis"},
+{e:"What happens during the G1 phase?",p:"The cell grows and performs the physiological functions characteristic of its tissue, producing mRNA and proteins"},
+{e:"What happens during the S phase?",p:"The cell replicates its DNA (S stands for synthesis)"},
+{e:"What happens during the G2 phase?",p:"The chromatin condenses to form short, thick structures by the end of G2"},
+
+{e:"What are cyclins?",p:"A group of proteins that promote different phases of the cell cycle"},
+{e:"What does an increase in cyclin D do during G1?",p:"Moves the cell quickly through the G1 phase by activating cyclin-dependent kinases"},
+{e:"What can result from overactivity of the cyclin D1 gene?",p:"Uncontrolled cell division, as occurs in cancers such as breast and esophageal cancer"},
+{e:"What are oncogenes?",p:"Genes that contribute to cancer; mutated forms of normal genes called proto-oncogenes"},
+{e:"What are tumor suppressor genes?",p:"Genes that inhibit the development of cancer"},
+{e:"What is p53?",p:"An important tumor suppressor gene coding for a transcription factor protein with a molecular weight of 53,000"},
+{e:"What does p53 do when there is DNA damage?",p:"Stalls cell division mainly at the G1 to S checkpoint, and either helps repair DNA or promotes apoptosis"},
+{e:"What percentage of cancers have a mutated p53 gene?",p:"Over 50%"},
+{e:"What happened to mice with p53 genes knocked out?",p:"They all developed tumors"},
+{e:"What was the 2007 Nobel Prize in Physiology or Medicine awarded for?",p:"The development of knockout mice"},
+{e:"How are knockout mice created?",p:"A defective gene copy is introduced into embryonic stem cells, which are placed into a normal embryo to form a chimera; breeding the chimera with a wild-type mouse produces progeny with the gene knocked out"},
+
+{e:"What is necrosis?",p:"Pathological cell death in which cells deprived of blood supply swell, rupture their membranes, and burst"},
+{e:"What is apoptosis?",p:"A form of cell death in which cells shrink, membranes remain intact but become bubbled, and nuclei condense"},
+{e:"What was the 2002 Nobel Prize in Physiology or Medicine awarded for?",p:"The discovery of apoptosis"},
+{e:"What are the two pathways leading to apoptosis?",p:"The extrinsic pathway and the intrinsic pathway"},
+{e:"What happens in the extrinsic apoptosis pathway?",p:"Extracellular death ligands bind to death receptors on the plasma membrane (e.g., FASL binding to the FAS receptor)"},
+{e:"What happens in the intrinsic apoptosis pathway?",p:"Intracellular signals (e.g., DNA damage or reactive oxygen species) trigger the outer mitochondrial membrane to become permeable, releasing cytochrome c into the cytoplasm"},
+{e:"What do both apoptosis pathways ultimately activate?",p:"Caspases—previously inactive cytoplasmic enzymes"},
+{e:"What are caspases sometimes called?",p:"The 'executioners' of the cell, since they cause DNA fragmentation and cell death"},
+{e:"What physiological roles does apoptosis serve?",p:"Remodeling tissues during embryonic development, tissue turnover in adults, and removal of cancerous cells with damaged DNA"},
+{e:"How long do digestive tract epithelial cells and skin epidermal cells live before apoptosis?",p:"Digestive tract cells: two to three days; epidermal skin cells: about two weeks"},
+{e:"How is apoptosis used in the immune system?",p:"Neutrophils die by apoptosis 24 hours after creation; killer T lymphocytes trigger apoptosis in targeted cells"},
+{e:"What role does p53 play in apoptosis?",p:"It is needed for apoptosis when DNA is damaged; if p53 is mutated, damaged cells survive and divide instead of dying, potentially causing cancer"},
+
+{e:"What are the three forms of skin cancer, and what promotes them?",p:"Squamous cell carcinoma, basal cell carcinoma, and melanoma, promoted by ultraviolet light"},
+{e:"What type of DNA mutation does UV light typically cause?",p:"Mutations affecting the pyrimidines cytosine or thymine"},
+{e:"Which skin cancers involve p53 gene mutations?",p:"Squamous cell and basal cell carcinoma (not melanoma)"},
+
+{e:"What are chromatids?",p:"The two identical strands of a chromosome, joined by a centromere, produced by semiconservative DNA replication"},
+{e:"What is the M phase of the cell cycle?",p:"Mitosis, the stage of cell division following G2"},
+{e:"What are the four stages of mitosis?",p:"Prophase, metaphase, anaphase, and telophase"},
+{e:"What happens during prophase?",p:"Chromosomes become visible as distinctive structures"},
+{e:"What happens during metaphase?",p:"Chromosomes line up single file along the equator of the cell, due to spindle fibers attached to the kinetochore at each centromere"},
+{e:"What happens during anaphase?",p:"Centromeres split apart and spindle fibers shorten, pulling the two chromatids in each chromosome to opposite poles"},
+{e:"What happens during telophase?",p:"Cytokinesis (division of the cytoplasm) produces two genetically identical daughter cells"},
+
+{e:"What is a centrosome?",p:"A structure found in all animal cells, located near the nucleus, containing two centrioles"},
+{e:"What is a centriole composed of?",p:"Nine evenly spaced bundles of microtubules, three microtubules per bundle, positioned at right angles to each other"},
+{e:"What is the pericentriolar material?",p:"An amorphous mass surrounding the centrioles that functions as the center for organizing cytoskeletal microtubules"},
+{e:"What happens to the centrosome during interphase if a cell will divide?",p:"It replicates itself"},
+{e:"What happens to the two centrosomes during mitosis?",p:"They move apart during prophase and reach opposite poles by metaphase, producing new dynamic microtubules"},
+{e:"How do new microtubules find chromosomes?",p:"They rapidly grow and shrink, 'feeling out' randomly until stabilized by binding to the proper region of a chromosome"},
+{e:"What role do centrosomes play in cytokinesis?",p:"They organize a ring of contractile filaments (actin and myosin) halfway between the poles, which contract to pinch the cell in two"},
+
+{e:"What happens to fibroblasts grown in vitro over time?",p:"They stop dividing after a certain number of population doublings"},
+{e:"How many times do fibroblasts from a newborn versus a 70-year-old divide in vitro?",p:"Newborn cells: 80 to 90 times; 70-year-old cells: 20 to 30 times"},
+{e:"What does decreased cell division capacity indicate?",p:"Senescence (aging)"},
+{e:"How do cancer cells differ in their in vitro division capacity?",p:"They apparently do not age and continue dividing indefinitely"},
+{e:"What are telomeres?",p:"DNA sequences at the ends of chromosomes that cap the ends and prevent enzymes from mistaking them for broken DNA"},
+{e:"What happens to telomeres with each chromosome replication?",p:"They lose 50 to 100 base pairs"},
+{e:"Why might cell division stop eventually?",p:"Because too much telomere DNA is lost, and the cell dies from age-related damage"},
+{e:"What enzyme allows germinal cells to divide indefinitely?",p:"Telomerase, which duplicates telomere DNA"},
+{e:"Where else is telomerase found?",p:"In hematopoietic stem cells, other continuously dividing stem cells, and most cancer cells"},
+
+{e:"What is hyperplasia?",p:"Growth due to an increase in cell number, from increased mitotic cell division"},
+{e:"What is hypertrophy?",p:"Growth of a tissue or organ due to an increase in cell size"},
+{e:"Which type of growth accounts for most growth in the body?",p:"Hyperplasia"},
+{e:"Give an example of hyperplasia.",p:"A callus on the palm, caused by thickening of skin from frequent abrasion"},
+{e:"Give an example of hypertrophy.",p:"Increase in skeletal muscle size due to exercise"},
+{e:"How can skeletal and cardiac muscle grow?",p:"Only by hypertrophy"},
+{e:"What is compensatory hypertrophy?",p:"Growth of skeletal or heart muscle in response to increased workload (e.g., weight training or hypertension)"},
+{e:"What is atrophy?",p:"The wasting or decrease in size of a cell, tissue, or organ, opposite of hypertrophy"},
+{e:"What can cause atrophy?",p:"Disuse of skeletal muscles, as in prolonged bed rest, disease, or advanced age"},
+
+{e:"What happens to chromosomes before both mitosis and meiosis?",p:"DNA is replicated (forming chromatids), and chromosomes become shorter and thicker"},
+{e:"What are homologous chromosomes?",p:"Matched pairs of chromosomes, one member inherited from the father and one from the mother, that are structurally similar but not identical in DNA sequence"},
+{e:"How many pairs of homologous chromosomes are there, and how are they categorized?",p:"22 homologous pairs of autosomal chromosomes and one pair of sex chromosomes (X and Y)"},
+{e:"What sex chromosomes do females and males have?",p:"Females have two X chromosomes; males have one X and one Y chromosome"},
+{e:"Where does meiosis occur?",p:"Only in the gonads (testes and ovaries), for producing gametes"},
+
+{e:"What happens during prophase I of meiosis?",p:"Chromosomes appear double-stranded (chromatids joined by centromere), and homologous chromosomes pair up side by side"},
+{e:"What happens during metaphase I?",p:"Homologous chromosome pairs line up at the equator, and the spindle apparatus is complete"},
+{e:"What happens during anaphase I?",p:"Homologous chromosomes separate; the two members of each pair move to opposite poles"},
+{e:"What happens during telophase I?",p:"The cytoplasm divides to produce two haploid cells"},
+{e:"What happens during prophase II?",p:"Chromosomes appear, each containing two chromatids"},
+{e:"What happens during metaphase II?",p:"Chromosomes line up single file along the equator as spindle formation completes"},
+{e:"What happens during anaphase II?",p:"Centromeres split and chromatids move to opposite poles"},
+{e:"What happens during telophase II?",p:"The cytoplasm divides to produce two haploid cells from each of the haploid cells formed at telophase I"},
+
+{e:"How many chromosomes does a daughter cell have after the first meiotic division?",p:"23, but each consists of two chromatids"},
+{e:"Why is meiosis also called reduction division?",p:"Because it reduces the chromosome number from 46 to 23 in daughter cells"},
+{e:"How many daughter cells are produced total from one parent cell in meiosis?",p:"Four"},
+{e:"What happens to these four daughter cells in the testes versus the ovaries?",p:"In the testes, all four become sperm cells; in the ovaries, three die and only one becomes a mature egg cell"},
+{e:"What is crossing-over?",p:"The exchange of parts of homologous chromosomes at prophase I"},
+{e:"What is the significance of chromosome shuffling and crossing-over during meiosis?",p:"They cause genetic recombination, ensuring gametes are genetically unique and providing genetic diversity for sexual reproduction"},
+
+{e:"What is epigenetic inheritance?",p:"The transmission of gene silencing patterns to daughter cells through mitosis or meiosis without a change in DNA base sequence"},
+{e:"What two mechanisms accomplish gene silencing in epigenetic inheritance?",p:"Methylation of cytosine bases in DNA, and posttranslational modifications of histone proteins (e.g., acetylation, methylation)"},
+{e:"Why can identical twins have differences in gene expression?",p:"Because of epigenetic changes that occur in response to differences in their environments"},
+{e:"What diseases are linked to problems with epigenetic inheritance?",p:"Cancer, fragile X syndrome, and systemic lupus erythematosus"},
+{e:"How does cancer relate to DNA methylation?",p:"Cancers show a global reduction in DNA methylation (hypomethylation), associated with gene activation and chromosome instability"},
+
+  ]
+
+
+	};
+
+
+	const MEM_KEY = '3_cell_structure_and_genetic_control'+'_anki_mem_set';
+
+
+
+
+	function loadMemoryStatus() {
+	try {
+	const raw = localStorage.getItem(MEM_KEY);
+	return raw ? JSON.parse(raw) : {};
+	} catch(e) {
+	return {};
+	}
+	}
+
+	function saveMemoryStatus() {
+	try {
+	localStorage.setItem(MEM_KEY, JSON.stringify(memoryStatus));
+	} catch(e) {
+	// storage full or unavailable — silently ignore
+	}
+	}
+
+	function clearMemoryStorage() {
+	try { localStorage.removeItem(MEM_KEY); } catch(e) {}
+	}
+	// ═══════════════════════════════════════════════════════
+
+	// ═══════════════════════════════════════════════════════
+	//  SRS ENGINE  (SM-2 algorithm)
+	//  Storage key separate from memoryStatus so backup/import
+	//  of old files stays fully compatible.
+	// ═══════════════════════════════════════════════════════
+	const SRS_KEY = 'koreanCards_srsData';
+
+	// srsData shape: { [cardKey]: { interval, easeFactor, repetitions, dueDate } }
+	// interval     → days until next review
+	// easeFactor   → multiplier, starts 2.5
+	// repetitions  → successful review streak
+	// dueDate      → ISO date string "YYYY-MM-DD"
+
+	function loadSrsData(){
+	try{ const r=localStorage.getItem(SRS_KEY); return r?JSON.parse(r):{}; }catch(e){ return {}; }
+	}
+	function saveSrsData(){
+	try{ localStorage.setItem(SRS_KEY,JSON.stringify(srsData)); }catch(e){}
+	}
+	function clearSrsStorage(){
+	try{ localStorage.removeItem(SRS_KEY); }catch(e){}
+	}
+
+	let srsData = loadSrsData();
+
+	function todayStr(){
+	// Returns "YYYY-MM-DD" in local time
+	const d=new Date();
+	return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+	}
+
+	// rating 0=Forgot, 1=NotSoEasy, 2=Good, 3=VeryGood
+	// SM-2 quality scores: 0→1 (forgot), 1→2 (struggled but recalled), 2→3 (good), 3→5 (easy)
+	const QUALITY_MAP = [1, 2, 3, 5];
+
+	function applySrs(key, rating){
+	let s = srsData[key] || { interval:1, easeFactor:2.5, repetitions:0, dueDate:todayStr() };
+	const q = QUALITY_MAP[rating];
+
+	if(q === 1){
+	// 0 Easy (paradoxically "0" in your label = hardest = forgot completely)
+	// Reset streak fully — back to day 1
+	s.repetitions = 0;
+	s.interval    = 1;
+	} else if(q === 2){
+	// 1 Not So Easy — struggled but recalled
+	// Keep streak going, but interval grows only by a small fixed step (not multiplied)
+	if(s.repetitions === 0)      s.interval = 1;
+	else if(s.repetitions === 1) s.interval = 2;
+	else                          s.interval = Math.max(2, Math.round(s.interval * 1.2));
+	s.repetitions++;
+	} else {
+	// 2 Good (q=3) or 3 Very Good (q=5) — normal SM-2 progression
+	if(s.repetitions === 0)      s.interval = 1;
+	else if(s.repetitions === 1) s.interval = 6;
+	else                          s.interval = Math.round(s.interval * s.easeFactor);
+	s.repetitions++;
+	}
+
+	// Update ease factor (SM-2 formula), clamp ≥ 1.3
+	s.easeFactor = Math.max(1.3, s.easeFactor + 0.1 - (5-q)*(0.08 + (5-q)*0.02));
+
+	// Set next due date
+	const due = new Date();
+	due.setDate(due.getDate() + s.interval);
+	s.dueDate = due.getFullYear()+'-'+String(due.getMonth()+1).padStart(2,'0')+'-'+String(due.getDate()).padStart(2,'0');
+
+	srsData[key] = s;
+	saveSrsData();
+	}
+
+	function getSrsState(item){
+	// Returns: 'new' | 'due' | 'soon' | 'ok'
+	const key = cardKey(item);
+	const s   = srsData[key];
+	if(!s) return 'new';
+	const today = todayStr();
+	if(s.dueDate <= today) return 'due';
+    // "soon" = due within 2 days
+    const diff = (new Date(s.dueDate) - new Date(today)) / 86400000;
+    return diff <= 2 ? 'soon' : 'ok';
+  }
+
+  function getDueItems(src){
+    const today = todayStr();
+    return src.filter(item => {
+      const s = srsData[cardKey(item)];
+      return !s || s.dueDate <= today; // new cards also count as due
+    });
+  }
+
+  // Due Today toggle state
+  let dueFilterActive = false;
+
+  function toggleDueFilter(){
+    dueFilterActive = !dueFilterActive;
+    const btn = document.getElementById('dueBtn');
+    btn.classList.toggle('active-due', dueFilterActive);
+    if(dueFilterActive){
+      // clear mem filter when entering due mode
+      activeMemFilter = null;
+      document.getElementById('memFilterSelect').value = '';
+    }
+    rebuildFilteredList();
+  }
+
+  function updateDueBadge(){
+    const due = getDueItems(list);
+    const badge = document.getElementById('dueBadge');
+    if(due.length > 0){
+      badge.style.display = 'inline';
+      badge.textContent   = due.length;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  function updateSrsChip(){
+    const chip = document.getElementById('srsChip');
+    const src  = filteredList.length ? filteredList : list;
+    if(!src.length){ chip.style.display='none'; return; }
+    const item  = src[cardIdx];
+    const state = getSrsState(item);
+    const s     = srsData[cardKey(item)];
+    chip.style.display = 'block';
+    chip.className = 'srs-chip ' + state;
+    if(state === 'new'){
+      chip.textContent = '★ New card';
+    } else if(state === 'due'){
+      chip.textContent = '⏰ Due for review';
+    } else {
+      const today = todayStr();
+      const diff  = Math.round((new Date(s.dueDate) - new Date(today)) / 86400000);
+      chip.textContent = state === 'soon'
+        ? `⏳ Due in ${diff} day${diff===1?'':'s'}`
+        : `✓ Next in ${diff} day${diff===1?'':'s'}`;
+    }
+  }
+  // ═══════════════════════════════════════════════════════
+
+  let fullList=[],list=[],cardIdx=0,flipped=false,mode=1,contestMode=false,drawOpen=false;
+  // ── CHANGE 1: load persisted data on startup instead of starting empty ──
+  let memoryStatus = loadMemoryStatus();
+  let activeMemFilter=null,filteredList=[];
+  const cardEl=document.getElementById('card');
+  const currentEl=document.getElementById('current');
+  const totalEl=document.getElementById('total');
+
+  function currentCategory(){return document.getElementById('categorySelect').value}
+  function cardKey(item){return currentCategory()+'|'+item.e}
+  function getMemLevel(item){const k=cardKey(item);return(k in memoryStatus)?memoryStatus[k]:null}
+
+  function updateMemCounts(){
+    const c=[0,0,0,0];
+    list.forEach(item=>{const lv=getMemLevel(item);if(lv!==null)c[lv]++});
+    for(let i=0;i<4;i++)document.getElementById('mc'+i).textContent=c[i];
+  }
+  function updateMemIndicator(){
+    const ind=document.getElementById('memIndicator');
+    if(!filteredList.length){ind.style.display='none';return}
+    const item=filteredList[cardIdx];
+    if(!item){ind.style.display='none';return}
+    const lv=getMemLevel(item);
+    if(lv===null){ind.style.display='none';return}
+    ind.style.display='block';
+    ind.className='card-mem-indicator level-'+lv;
+    ind.textContent=['0 Forgot','1 Not So Easy','2 Good','3 Very Good'][lv];
+  }
+  function markMemory(level){
+    if(!filteredList.length)return;
+    const item = filteredList[cardIdx];
+    memoryStatus[cardKey(item)]=level;
+    // ── CHANGE 2: persist every time a card is rated ──
+    saveMemoryStatus();
+    // ── SRS: update schedule for this card ──
+    applySrs(cardKey(item), level);
+    updateMemCounts();updateMemIndicator();updateSrsChip();updateDueBadge();
+    if(activeMemFilter!==null||dueFilterActive)rebuildFilteredList();
+  }
+  function rebuildFilteredList(){
+    if(dueFilterActive){
+      filteredList = getDueItems(list);
+    } else if(activeMemFilter===null){
+      filteredList=[...list];
+    } else if(activeMemFilter==='unrated'){
+      filteredList=list.filter(i=>getMemLevel(i)===null);
+    } else {
+      const lv=parseInt(activeMemFilter);filteredList=list.filter(i=>getMemLevel(i)===lv);
+    }
+    if(cardIdx>=filteredList.length)cardIdx=Math.max(0,filteredList.length-1);
+    totalEl.textContent=filteredList.length;
+    currentEl.textContent=filteredList.length?cardIdx+1:0;
+    
+    // Following code ensures that the answer side is not displayed before the fiip to question side is not completed.
+      
+      const src=filteredList.length?filteredList:list;if(!src.length)return;
+      if(flipped)
+      {
+        flip();
+        setTimeout(  ()=>{cardIdx=(cardIdx+1)%src.length;
+        updateCard();
+        updateMemIndicator()
+         },250  )
+      }
+      else{
+        //cardIdx=(cardIdx+1)%src.length;
+        updateCard();
+        updateMemIndicator()
+      }
+      
+    //
+
+    resetFlip();
+    //updateCard();
+    //updateMemIndicator();
+    updateReviewBanner();
+    updateSrsChip();
+    updateDueBadge();
+
+    //resetFlip();updateCard();updateMemIndicator();updateReviewBanner();updateSrsChip();updateDueBadge();
+
+
+  }
+  function applyMemFilter(){
+    const v=document.getElementById('memFilterSelect').value;
+    activeMemFilter=v===''?null:v;rebuildFilteredList();
+  }
+  function clearMemFilter(){document.getElementById('memFilterSelect').value='';activeMemFilter=null;rebuildFilteredList()}
+  function updateReviewBanner(){
+    const b=document.getElementById('reviewBanner');
+    if(activeMemFilter===null){b.style.display='none';return}
+    b.style.display='block';
+    const names=['Forgot','Not So Easy','Good','Very Good'];
+    document.getElementById('reviewLabel').textContent=activeMemFilter==='unrated'?'Unrated':names[parseInt(activeMemFilter)];
+    document.getElementById('reviewCount').textContent=filteredList.length;
+  }
+  function resetMemStatus(){
+    if(!confirm('Reset all memory status for the current card set?'))return;
+    list.forEach(item=>delete memoryStatus[cardKey(item)]);
+    // ── CHANGE 3: persist after a reset too ──
+    saveMemoryStatus();
+    document.getElementById('memFilterSelect').value='';activeMemFilter=null;
+    rebuildFilteredList();updateMemCounts();
+  }
+
+  function clearAllMemory(){
+    const total = Object.keys(memoryStatus).length + Object.keys(srsData).length;
+    if(total === 0){ alert('No memory data to clear — everything is already empty.'); return; }
+    const confirmed = confirm(
+      '⚠️ Clear ALL Memory Data?\n\n' +
+      'This will permanently delete all ratings AND all SRS schedules across ALL card sets.\n\n' +
+      'This cannot be undone.\n\nAre you sure you want to continue?'
+    );
+    if(!confirmed) return;
+    memoryStatus = {};
+    srsData = {};
+    clearMemoryStorage();
+    clearSrsStorage();
+    updateMemCounts(); updateMemIndicator(); rebuildFilteredList(); updateDueBadge();
+    document.getElementById('backupInfo').textContent = '🗑 All memory data cleared.';
+    document.getElementById('backupInfo').style.color = '#ef9a9a';
+  }
+
+  function exportMemory(){
+    const total = Object.keys(memoryStatus).length;
+    if(total === 0 && Object.keys(srsData).length === 0){ alert('No memory ratings to export yet. Rate some cards first!'); return; }
+    const payload = { version: 2, exported: new Date().toISOString(), data: memoryStatus, srs: srsData };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const date = new Date().toISOString().slice(0,10);
+    a.href     = url;
+    a.download = `7_NS_Cards_anki_${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    const info = document.getElementById('backupInfo');
+    info.textContent = `✔ Exported ${total} rating(s) — keep this file safe.`;
+    info.style.color = '#a5d6a7';
+  }
+
+  function importMemory(event){
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try {
+        const payload = JSON.parse(e.target.result);
+        const incoming = payload.data || payload;
+        if(typeof incoming !== 'object' || Array.isArray(incoming)) throw new Error('Invalid format');
+        const count = Object.keys(incoming).length;
+        if(!confirm(`Import ${count} rating(s) from file?\n\nThis will MERGE with your current ratings and SRS schedules.`)) return;
+        Object.assign(memoryStatus, incoming);
+        saveMemoryStatus();
+        if(payload.srs && typeof payload.srs === 'object'){
+          Object.assign(srsData, payload.srs);
+          saveSrsData();
+        }
+        updateMemCounts(); updateMemIndicator(); rebuildFilteredList(); updateDueBadge();
+        const info = document.getElementById('backupInfo');
+        info.textContent = `✔ Imported ${count} rating(s). Exported: ${payload.exported ? payload.exported.slice(0,10) : 'unknown'}`;
+        info.style.color = '#a5d6a7';
+      } catch(err) {
+        alert('Could not read file. Make sure it is a valid Korean Cards memory backup (.json).');
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function buildCombo(){
+    const sel=document.getElementById('categorySelect');
+    Object.keys(allLists).forEach(cat=>{
+      const o=document.createElement('option');o.value=cat;o.textContent=`${cat}  (${allLists[cat].length} cards)`;sel.appendChild(o);
+    });
+  }
+  function loadCategory(){
+    const cat=document.getElementById('categorySelect').value;
+    fullList=[...allLists[cat]];list=[...fullList];cardIdx=0;
+    document.getElementById('startIdx').value=1;document.getElementById('endIdx').value=fullList.length;
+    activeMemFilter=null;dueFilterActive=false;
+    document.getElementById('memFilterSelect').value='';
+    document.getElementById('dueBtn').classList.remove('active-due');
+    filteredList=[...list];
+    resetFlip();totalEl.textContent=list.length;updateCard();updateMemCounts();updateMemIndicator();updateReviewBanner();updateDueBadge();
+    if(contestMode)buildQuiz();
+  }
+  function showRange(){
+    let s=parseInt(document.getElementById('startIdx').value),e=parseInt(document.getElementById('endIdx').value);
+    s=Math.max(1,Math.min(s,fullList.length));e=Math.max(s,Math.min(e,fullList.length));
+    document.getElementById('startIdx').value=s;document.getElementById('endIdx').value=e;
+    list=fullList.slice(s-1,e);cardIdx=0;activeMemFilter=null;dueFilterActive=false;
+    document.getElementById('memFilterSelect').value='';
+    document.getElementById('dueBtn').classList.remove('active-due');
+    filteredList=[...list];resetFlip();totalEl.textContent=list.length;updateCard();updateMemCounts();updateMemIndicator();updateReviewBanner();updateDueBadge();
+    if(contestMode)buildQuiz();
+  }
+  function showAll(){
+    list=[...fullList];cardIdx=0;activeMemFilter=null;dueFilterActive=false;
+    document.getElementById('memFilterSelect').value='';
+    document.getElementById('dueBtn').classList.remove('active-due');
+    filteredList=[...list];resetFlip();document.getElementById('startIdx').value=1;document.getElementById('endIdx').value=fullList.length;
+    totalEl.textContent=list.length;updateCard();updateMemCounts();updateMemIndicator();updateReviewBanner();updateDueBadge();
+    if(contestMode)buildQuiz();
+  }
+  
+
+  function updateCard_Prev(){
+    const src=filteredList.length?filteredList:list;
+    if(!src.length){document.getElementById('eng').textContent='(No cards)';document.getElementById('han').textContent='';document.getElementById('pro').textContent='';currentEl.textContent=0;return}
+    const item=src[cardIdx];
+    let front,bT,bB;
+    if(mode===1){front=item.e;bT=item.k;bB=item.p}
+    else if(mode===2){front=item.p;bT=item.e;bB=item.k}
+    else{front=item.k;bT=item.e;bB=item.p}
+    document.getElementById('eng').textContent=front;
+    document.getElementById('han').textContent=bT;
+    document.getElementById('pro').textContent=bB;
+    currentEl.textContent=cardIdx+1;totalEl.textContent=src.length;
+    updateSrsChip();
+  }
+
+
+ function updateCard()
+ {
+    const src=filteredList.length?filteredList:list;
+    if(!src.length){document.getElementById('eng').textContent='(No cards)';document.getElementById('han').textContent='';document.getElementById('pro').textContent='';currentEl.textContent=0;return}
+    const item=src[cardIdx];
+    let front,bT,bB;
+    if(mode===1){front=item.e;bB=item.p}
+    if(mode===2){front=item.p;bB=item.e}
+    
+    document.getElementById('eng').innerHTML=front;
+    //document.getElementById('han').textContent=bT;
+    document.getElementById('pro').innerHTML=bB;
+
+
+    currentEl.textContent=cardIdx+1;totalEl.textContent=src.length;
+    updateSrsChip();
+  }
+
+
+
+  function setMode(m){
+    mode=m;
+    document.querySelectorAll('.mode-opt').forEach((el,i)=>el.classList.toggle('active',i+1===m));
+    if(flipped)flip();updateCard();if(contestMode)buildQuiz();
+  }
+  function shuffleCards(){
+    const src=activeMemFilter!==null?filteredList:list;
+    for(let j=src.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[src[j],src[r]]=[src[r],src[j]]}
+    if(activeMemFilter!==null)filteredList=src;else{list=src;filteredList=[...src]}
+    cardIdx=0;resetFlip();updateCard();updateMemIndicator();if(contestMode)buildQuiz();
+  }
+  function resetFlip(){if(flipped){flipped=false;cardEl.classList.remove('flipped')}}
+  function flip(){flipped=!flipped;cardEl.classList.toggle('flipped',flipped)}
+  function next(){
+    const src=filteredList.length?filteredList:list;if(!src.length)return;
+    if(flipped){flip();setTimeout(()=>{cardIdx=(cardIdx+1)%src.length;updateCard();updateMemIndicator()},200)}
+    else{cardIdx=(cardIdx+1)%src.length;updateCard();updateMemIndicator()}
+  }
+  function prev(){
+    const src=filteredList.length?filteredList:list;if(!src.length)return;
+    if(flipped){flip();setTimeout(()=>{cardIdx=(cardIdx-1+src.length)%src.length;updateCard();updateMemIndicator()},200)}
+    else{cardIdx=(cardIdx-1+src.length)%src.length;updateCard();updateMemIndicator()}
+  }
+  cardEl.addEventListener('click',()=>flip());
+  document.addEventListener('keydown',function(e){
+    if(contestMode)return;
+    if(e.key===' '||e.key==='Enter'){e.preventDefault();flip()}
+    else if(e.key==='ArrowRight')next();
+    else if(e.key==='ArrowLeft')prev();
+    else if(e.key==='0')markMemory(0);else if(e.key==='1')markMemory(1);
+    else if(e.key==='2')markMemory(2);else if(e.key==='3')markMemory(3);
+  });
+
+  // ── Settings panel toggle (Card Range Filter only) ──
+  function toggleSettings(){
+    const wrap  = document.getElementById('settingsPanelWrap');
+    const arrow = document.getElementById('settingsArrow');
+    const isOpen = wrap.classList.toggle('open');
+    if(arrow) arrow.style.transform = isOpen ? 'rotate(180deg)' : '';
+  }
+
+  // ── Menu bar ──
+  function toggleMenu(id){
+    const item = document.getElementById(id);
+    const wasOpen = item.classList.contains('open');
+    closeMenus();
+    if(!wasOpen) item.classList.add('open');
+  }
+  function closeMenus(){
+    document.querySelectorAll('.menu-item.open').forEach(m=>{
+      if(m.id !== 'menuSettings') m.classList.remove('open');
+    });
+  }
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.menu-item')) closeMenus();
+  });
+
+  // ── Draw toggle ──
+  function toggleDraw(){
+    drawOpen=!drawOpen;
+    const panel=document.getElementById('drawPanel');
+    const btn=document.getElementById('drawBtn');
+    panel.style.display=drawOpen?'block':'none';
+    btn.textContent=drawOpen?'✏️ Hide Panel':'✏️ Write Panel';
+    btn.classList.toggle('draw-on-menu',drawOpen);
+    if(drawOpen)setTimeout(initCanvas,50);
+  }
+
+  // ── Draw engine ──
+  let dCtx,dCanvas,drawing=false,erasing=false,dColor='#1a1a1a',dSize=4,pts=[],dSnaps=[];
+  function initCanvas(){
+    if(dCtx)return;
+    dCanvas=document.getElementById('drawCanvas');
+    dCtx=dCanvas.getContext('2d');
+    resizeCanvas();
+    dCanvas.addEventListener('mousedown',startDraw);
+    dCanvas.addEventListener('mousemove',doDraw);
+    dCanvas.addEventListener('mouseup',endDraw);
+    dCanvas.addEventListener('mouseleave',endDraw);
+    dCanvas.addEventListener('touchstart',startDraw,{passive:false});
+    dCanvas.addEventListener('touchmove',doDraw,{passive:false});
+    dCanvas.addEventListener('touchend',endDraw,{passive:false});
+    document.querySelectorAll('.swatch').forEach(sw=>{
+      sw.addEventListener('click',()=>{
+        document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+        sw.classList.add('active');dColor=sw.dataset.color;erasing=false;
+        document.getElementById('eraseBtn').classList.remove('erase-on');
+      });
+    });
+    window.addEventListener('resize',resizeCanvas);
+  }
+  function resizeCanvas(){
+    if(!dCanvas)return;
+    const w=dCanvas.offsetWidth;
+    const img=dCtx.getImageData(0,0,dCanvas.width,dCanvas.height);
+    dCanvas.width=w;dCanvas.height=300;
+    dCtx.putImageData(img,0,0);
+  }
+  function getPos(e){
+    const rect=dCanvas.getBoundingClientRect();
+    const sx=dCanvas.width/rect.width,sy=dCanvas.height/rect.height;
+    const src=e.touches?e.touches[0]:e;
+    return{x:(src.clientX-rect.left)*sx,y:(src.clientY-rect.top)*sy};
+  }
+  function saveSnap(){if(dSnaps.length>40)dSnaps.shift();dSnaps.push(dCtx.getImageData(0,0,dCanvas.width,dCanvas.height))}
+  function drawSmooth(){
+    if(pts.length<2)return;
+    dCtx.beginPath();
+    dCtx.strokeStyle=erasing?'#ffffff':dColor;
+    dCtx.lineWidth=erasing?dSize*3:dSize;
+    dCtx.lineCap='round';dCtx.lineJoin='round';
+    dCtx.moveTo(pts[0].x,pts[0].y);
+    for(let i=1;i<pts.length-1;i++){
+      const mx=(pts[i].x+pts[i+1].x)/2,my=(pts[i].y+pts[i+1].y)/2;
+      dCtx.quadraticCurveTo(pts[i].x,pts[i].y,mx,my);
+    }
+    const l=pts[pts.length-1];dCtx.lineTo(l.x,l.y);dCtx.stroke();
+  }
+  function startDraw(e){
+    e.preventDefault();saveSnap();drawing=true;pts=[getPos(e)];
+    const p=pts[0];dCtx.beginPath();
+    dCtx.arc(p.x,p.y,(erasing?dSize*1.5:dSize/2),0,Math.PI*2);
+    dCtx.fillStyle=erasing?'#ffffff':dColor;dCtx.fill();
+  }
+  function doDraw(e){
+    e.preventDefault();if(!drawing)return;
+    pts.push(getPos(e));
+    if(dSnaps.length)dCtx.putImageData(dSnaps[dSnaps.length-1],0,0);
+    drawSmooth();
+  }
+  function endDraw(e){e.preventDefault();drawing=false;pts=[]}
+  function onSizeChange(){
+    dSize=parseInt(document.getElementById('sizeSlider').value);
+    document.getElementById('dotPreview').style.width=dSize+'px';
+    document.getElementById('dotPreview').style.height=dSize+'px';
+  }
+  function toggleErase(){erasing=!erasing;document.getElementById('eraseBtn').classList.toggle('erase-on',erasing)}
+  function undoDraw(){if(!dSnaps.length)return;dCtx.putImageData(dSnaps.pop(),0,0)}
+  function clearCanvas(){saveSnap();dCtx.clearRect(0,0,dCanvas.width,dCanvas.height)}
+
+  // ── Contest ──
+  function toggleContest(){
+    contestMode=!contestMode;
+    const btn=document.getElementById('contestBtn');
+    document.getElementById('flashSection').style.display=contestMode?'none':'block';
+    document.getElementById('quizSection').style.display=contestMode?'block':'none';
+    if(contestMode){btn.textContent='✖ Back to Cards';btn.classList.add('contest-on-menu');buildQuiz()}
+    else{btn.textContent='🎯 Match Contest';btn.classList.remove('contest-on-menu')}
+  }
+
+  // ── Quiz ──
+  const ROUND_SIZE=4;let rounds=[],currentRound=0,roundStates=[],selL=null,selR=null;
+  
+  
+
+
+ function getQ(i){return mode===1?i.e:mode===2?i.p:i.k}
+
+  function getA(i){
+    const d='\u00A0\u00A0-\u00A0\u00A0';
+    return mode===1?i.p:mode===2?i.e:i.e+i.p;
+  }
+
+  function buildQuiz(){
+    const src=activeMemFilter!==null&&filteredList.length?filteredList:list;
+    rounds=[];for(let i=0;i<src.length;i+=ROUND_SIZE)rounds.push(src.slice(i,i+ROUND_SIZE));
+    currentRound=0;roundStates=rounds.map(()=>({matched:new Set(),errors:0}));renderRound();
+  }
+  function renderRound(){
+    const rd=rounds[currentRound],state=roundStates[currentRound];selL=null;selR=null;
+    const start=rounds.slice(0,currentRound).reduce((a,r)=>a+r.length,0)+1;
+    document.getElementById('quizRoundLabel').textContent=`Round ${currentRound+1} of ${rounds.length}  •  Cards ${start}–${start+rd.length-1}`;
+    const src=activeMemFilter!==null&&filteredList.length?filteredList:list;
+    const tM=roundStates.reduce((a,s)=>a+s.matched.size,0);
+    document.getElementById('scoreCorrect').textContent=tM;
+    document.getElementById('scoreRemain').textContent=src.length-tM;
+    document.getElementById('scoreWrong').textContent=roundStates.reduce((a,s)=>a+s.errors,0);
+    const ao=[...rd.keys()];for(let j=ao.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[ao[j],ao[r]]=[ao[r],ao[j]]}
+    const cL=document.getElementById('colLeft'),cR=document.getElementById('colRight');
+    cL.innerHTML='';cR.innerHTML='';
+    rd.forEach((item,idx)=>{
+      const el=document.createElement('div');el.className='match-item question';el.innerHTML=getQ(item);el.dataset.idx=idx;
+      if(state.matched.has(idx))el.classList.add('matched');else el.addEventListener('click',()=>pickL(idx,el));
+      cL.appendChild(el);
+    });
+    ao.forEach(idx=>{
+      const item=rd[idx],el=document.createElement('div');el.className='match-item answer';el.innerHTML=getA(item);el.dataset.idx=idx;
+      if(state.matched.has(idx))el.classList.add('matched');else el.addEventListener('click',()=>pickR(idx,el));
+      cR.appendChild(el);
+    });
+    const banner=document.getElementById('roundComplete');
+    if(state.matched.size===rd.length){
+      banner.style.display='block';
+      document.getElementById('roundCompleteMsg').textContent=`All ${rd.length} pairs matched! ${state.errors===0?'🌟 Perfect round!':`${state.errors} error${state.errors>1?'s':''} this round.`}`;
+    }else banner.style.display='none';
+    document.getElementById('prevRoundBtn').disabled=currentRound===0;
+    document.getElementById('nextRoundBtn').disabled=currentRound===rounds.length-1;
+  }
+  function pickL(idx,el){
+    if(roundStates[currentRound].matched.has(idx))return;
+    if(selL)selL.el.classList.remove('selected');selL={idx,el};el.classList.add('selected');tryMatch();
+  }
+  function pickR(idx,el){
+    if(roundStates[currentRound].matched.has(idx))return;
+    if(selR)selR.el.classList.remove('selected');selR={idx,el};el.classList.add('selected');tryMatch();
+  }
+  function tryMatch(){
+    if(!selL||!selR)return;
+    const state=roundStates[currentRound],lEl=selL.el,rEl=selR.el;
+    if(selL.idx===selR.idx){
+      lEl.classList.remove('selected');rEl.classList.remove('selected');
+      lEl.classList.add('matched');rEl.classList.add('matched');
+      lEl.style.pointerEvents='none';rEl.style.pointerEvents='none';
+      state.matched.add(selL.idx);selL=null;selR=null;
+      const src=activeMemFilter!==null&&filteredList.length?filteredList:list;
+      const tM=roundStates.reduce((a,s)=>a+s.matched.size,0);
+      document.getElementById('scoreCorrect').textContent=tM;
+      document.getElementById('scoreRemain').textContent=src.length-tM;
+      if(state.matched.size===rounds[currentRound].length){
+        document.getElementById('roundComplete').style.display='block';
+        document.getElementById('roundCompleteMsg').textContent=`All ${rounds[currentRound].length} pairs matched! ${state.errors===0?'🌟 Perfect round!':`${state.errors} error${state.errors>1?'s':''} this round.`}`;
+      }
+    }else{
+      state.errors++;document.getElementById('scoreWrong').textContent=roundStates.reduce((a,s)=>a+s.errors,0);
+      [lEl,rEl].forEach(el=>{el.classList.remove('selected');el.classList.add('wrong-flash');setTimeout(()=>el.classList.remove('wrong-flash'),400)});
+      selL=null;selR=null;
+    }
+  }
+  function changeRound(dir){currentRound=Math.max(0,Math.min(rounds.length-1,currentRound+dir));renderRound()}
+  function restartQuiz(){roundStates=rounds.map(()=>({matched:new Set(),errors:0}));currentRound=0;renderRound()}
+
+  buildCombo();loadCategory();
+
+  // ── Dropdown z-index fix ──
+  // preserve-3d creates a stacking context that traps selects behind the card.
+  // Temporarily flatten the card while any <select> is open so the dropdown renders on top.
+  (function(){
+    function onSelectFocus(){ cardEl.classList.add('select-open') }
+    function onSelectBlur(){  cardEl.classList.remove('select-open') }
+    function attachSelectFix(){
+      document.querySelectorAll('select').forEach(sel => {
+        sel.removeEventListener('focus',  onSelectFocus);
+        sel.removeEventListener('blur',   onSelectBlur);
+        sel.removeEventListener('mousedown', onSelectFocus);
+        sel.removeEventListener('change', onSelectBlur);
+        sel.addEventListener('focus',     onSelectFocus);
+        sel.addEventListener('blur',      onSelectBlur);
+        sel.addEventListener('mousedown', onSelectFocus);
+        sel.addEventListener('change',    onSelectBlur);
+      });
+    }
+    attachSelectFix();
+    // Re-attach if selects are ever dynamically added
+    document.addEventListener('DOMContentLoaded', attachSelectFix);
+  })();
+</script>
+</body>
+</html>
